@@ -2,8 +2,6 @@
 
 A Pokémon-themed Pomodoro timer. Complete focus sessions, catch surprise Pokémon, and build your personal Pokédex.
 
-![Pokémon Pomodoro App](https://github.com/santichausis/pokemon-pomodoro/assets/screenshot.png)
-
 ## How it works
 
 1. **Set your goal** — write what you'll work on this session
