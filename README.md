@@ -2,6 +2,10 @@
 
 Un timer Pomodoro con temática Pokémon. Completá sesiones de concentración, capturá Pokémon sorpresa y construí tu Pokédex personal.
 
+![Pokémon Pomodoro App](https://imgur.com/a/XXXXXX)
+
+![image](https://github.com/user-attachments/assets/screenshot.png)
+
 ## ¿Cómo funciona?
 
 1. **Escribí tu objetivo** — qué vas a hacer en esta sesión
@@ -44,3 +48,11 @@ Abrí [http://localhost:3000](http://localhost:3000).
 | `#FFCB05` | Amarillo Pikachu — advertencia, banner de captura |
 | `#003A70` | Azul oscuro — títulos, textos importantes |
 | `#3D7DCA` | Azul Pokémon — acento |
+
+## Posibles mejoras futuras
+
+1. **Estadísticas personales** — mostrar sesiones completadas totales, Pokémon capturados, tiempo acumulado, racha de días
+2. **Notificaciones** — notificaciones del navegador cuando termina el timer (útil si te alejás de la pantalla)
+3. **Modos de dificultad** — capturar solo Pokémon de tipos específicos, leyendarios raros, o solo de generaciones seleccionadas
+4. **Multijugador** — competir con amigos en tiempo real (quién captura más Pokémon en una semana)
+5. **Exportar/importar** — descargar tu Pokédex como JSON o CSV para respaldar tu colección
