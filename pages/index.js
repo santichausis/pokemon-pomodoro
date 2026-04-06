@@ -1,19 +1,16 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
+import { GENERATIONS, TYPE_CLASSES } from '@/lib/constants';
+import { playCompletionSound, fetchRandomPokemon, getDateStr, copyToClipboard } from '@/lib/utils';
 
 const CIRCUMFERENCE = 2 * Math.PI * 104;
 
-const GENERATIONS = {
-  all:  { range: [1, 898] },
-  gen1: { range: [1, 151] },
-  gen2: { range: [152, 251] },
-  gen3: { range: [252, 386] },
-  gen4: { range: [387, 493] },
-  gen5: { range: [494, 649] },
-  gen6: { range: [650, 721] },
-  gen7: { range: [722, 809] },
-  gen8: { range: [810, 898] },
-};
+// Dynamic imports for heavy components
+const CaptureModal = dynamic(() => import('@/components/CaptureModal'), { ssr: false });
+const PokemonGrid = dynamic(() => import('@/components/PokemonGrid'), { ssr: false });
+const FriendCollection = dynamic(() => import('@/components/FriendCollection'), { ssr: false });
+const Footer = dynamic(() => import('@/components/Footer'), { ssr: false });
 
 const T = {
   en: {
@@ -80,89 +77,29 @@ const T = {
   },
 };
 
-const TYPE_CLASSES = {
-  normal: 'typeNormal', fire: 'typeFire', water: 'typeWater',
-  grass: 'typeGrass', electric: 'typeElectric', ice: 'typeIce',
-  fighting: 'typeFighting', poison: 'typePoison', ground: 'typeGround',
-  flying: 'typeFlying', psychic: 'typePsychic', bug: 'typeBug',
-  rock: 'typeRock', ghost: 'typeGhost', dragon: 'typeDragon',
-  dark: 'typeDark', steel: 'typeSteel', fairy: 'typeFairy',
-};
-
-function playCompletionSound() {
-  try {
-    const ctx = new AudioContext();
-    [523, 659, 784, 1046].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
-      osc.type = 'sine';
-      const t = ctx.currentTime + i * 0.15;
-      osc.frequency.setValueAtTime(freq, t);
-      gain.gain.setValueAtTime(0.25, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
-      osc.start(t); osc.stop(t + 0.3);
-    });
-  } catch (_) {}
-}
-
-async function fetchRandomPokemon(range = [1, 898]) {
-  const [min, max] = range;
-  const id = Math.floor(Math.random() * (max - min + 1)) + min;
-  const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`);
-  const data = await res.json();
-  const sprite = data.sprites?.other?.['official-artwork']?.front_default || data.sprites?.front_default || '';
-  return { id, name: data.name.charAt(0).toUpperCase() + data.name.slice(1), sprite, types: data.types.map(t => t.type.name) };
-}
-
-function getDateStr(daysAgo = 0) {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  return d.toLocaleDateString('en-US');
-}
-
-async function copyToClipboard(text) {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text);
-    return;
-  }
-  // Fallback for environments without clipboard API
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
-  document.body.appendChild(ta);
-  ta.focus(); ta.select();
-  document.execCommand('copy');
-  document.body.removeChild(ta);
-}
-
 export default function Home() {
   const [lang, setLang]             = useState('en');
   const t = T[lang];
 
-  // Timer
   const [totalSec, setTotalSec]     = useState(25 * 60);
   const [remaining, setRemaining]   = useState(25 * 60);
   const [running, setRunning]       = useState(false);
   const [goal, setGoal]             = useState('');
-  const [statusKey, setStatusKey]   = useState('ready'); // 'ready' | 'focusing' | 'paused' | 'done'
+  const [statusKey, setStatusKey]   = useState('ready');
   const [activeDur, setActiveDur]   = useState(25);
   const [showCustom, setShowCustom] = useState(false);
   const [customVal, setCustomVal]   = useState('');
   const [mode, setMode]             = useState('all');
 
-  // Data
   const [collection, setCollection]             = useState([]);
   const [sessions, setSessions]                 = useState([]);
   const [friendCollection, setFriendCollection] = useState([]);
 
-  // Modal
   const [showModal, setShowModal]     = useState(false);
   const [modalPhase, setModalPhase]   = useState('shaking');
   const [captured, setCaptured]       = useState(null);
   const [currentGoal, setCurrentGoal] = useState('');
 
-  // UI
   const [copied, setCopied] = useState(false);
 
   const intervalRef   = useRef(null);
@@ -172,24 +109,16 @@ export default function Home() {
   totalSecRef.current = totalSec;
   modeRef.current     = mode;
 
-  // Status label derived from key + lang
   const statusLabel = {
     ready: t.statusReady, focusing: t.statusFocusing,
     paused: t.statusPaused, done: t.statusDone,
   }[statusKey] ?? t.statusReady;
 
-  // Persist lang preference
   useEffect(() => {
     const saved = localStorage.getItem('poke-lang');
     if (saved === 'en' || saved === 'es') setLang(saved);
   }, []);
-  const toggleLang = () => {
-    const next = lang === 'en' ? 'es' : 'en';
-    setLang(next);
-    localStorage.setItem('poke-lang', next);
-  };
 
-  // Load data from localStorage
   useEffect(() => {
     const c = localStorage.getItem('poke-collection');
     if (c) setCollection(JSON.parse(c));
@@ -197,7 +126,6 @@ export default function Home() {
     if (s) setSessions(JSON.parse(s));
   }, []);
 
-  // Check share URL (multijugador)
   useEffect(() => {
     const hash = window.location.hash;
     if (hash.startsWith('#share=')) {
@@ -208,7 +136,6 @@ export default function Home() {
     }
   }, []);
 
-  // Stats
   const stats = useMemo(() => {
     const totalSessions = sessions.length;
     const totalSeconds  = sessions.reduce((a, s) => a + (s.duration || 0), 0);
@@ -222,7 +149,6 @@ export default function Home() {
     return { totalSessions, timeStr, streak, uniquePokemon };
   }, [sessions, collection]);
 
-  // Ring
   const ringOffset = CIRCUMFERENCE * (1 - remaining / totalSec);
   const ringClass  = remaining <= 0 ? 'timerRingDone' : remaining <= 60 ? 'timerRingWarning' : '';
   const fmt = s => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
@@ -304,7 +230,6 @@ export default function Home() {
 
   const closeModal = () => { setShowModal(false); reset(); };
 
-  // Export
   function exportCollection() {
     const blob = new Blob([JSON.stringify({ collection, sessions }, null, 2)], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
@@ -312,7 +237,6 @@ export default function Home() {
     a.click(); URL.revokeObjectURL(url);
   }
 
-  // Import
   function handleImport(e) {
     const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader();
@@ -327,7 +251,6 @@ export default function Home() {
     e.target.value = '';
   }
 
-  // Share (multijugador)
   async function shareCollection() {
     const encoded = encodeURIComponent(btoa(JSON.stringify({ collection })));
     const url = `${window.location.origin}${window.location.pathname}#share=${encoded}`;
@@ -350,15 +273,12 @@ export default function Home() {
       </Head>
 
       <div className="app">
-
-        {/* Language toggle */}
         <div className="langBar">
           <button className={`langBtn${lang === 'en' ? ' langBtnActive' : ''}`} onClick={() => { setLang('en'); localStorage.setItem('poke-lang','en'); }}>EN</button>
           <span className="langSep">|</span>
           <button className={`langBtn${lang === 'es' ? ' langBtnActive' : ''}`} onClick={() => { setLang('es'); localStorage.setItem('poke-lang','es'); }}>ES</button>
         </div>
 
-        {/* Header */}
         <header className="appHeader">
           <div className="headerPokeball">
             <div className="hpbTop" /><div className="hpbBand"><div className="hpbBtn" /></div><div className="hpbBottom" />
@@ -369,7 +289,6 @@ export default function Home() {
           </div>
         </header>
 
-        {/* Stats bar */}
         <div className="statsBar">
           <div className="statItem"><span className="statValue">{stats.totalSessions}</span><span className="statLabel">{t.stats[0]}</span></div>
           <div className="statDivider" />
@@ -380,7 +299,6 @@ export default function Home() {
           <div className="statItem"><span className="statValue">{stats.uniquePokemon}</span><span className="statLabel">{t.stats[3]}</span></div>
         </div>
 
-        {/* Main card */}
         <main className="mainCard">
           <div className="goalWrapper">
             <label className="goalLabel" htmlFor="goal-input">{t.goalLabel}</label>
@@ -438,7 +356,6 @@ export default function Home() {
           </div>
         </main>
 
-        {/* Pokédex */}
         <section className="collectionSection">
           <div className="collectionHeader">
             <div className="collectionTitleGroup">
@@ -454,94 +371,22 @@ export default function Home() {
               <input type="file" ref={importRef} accept=".json" onChange={handleImport} style={{ display: 'none' }} />
             </div>
           </div>
-          <div className="pokemonGrid">
-            {collection.length === 0 ? (
-              <div className="emptyState">
-                <div className="emptyPokeball">
-                  <div className="epbTop" /><div className="epbBand"><div className="epbBtn" /></div><div className="epbBottom" />
-                </div>
-                <p>{t.emptyLine1}<br />{t.emptyLine2}</p>
-              </div>
-            ) : [...collection].sort((a, b) => a.id - b.id).map(p => (
-              <div key={`${p.id}-${p.session}`} className="pokemonCard">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="pokemonCardSprite" src={p.sprite} alt={p.name} loading="lazy" />
-                <span className="pokemonCardNumber">#{String(p.id).padStart(3, '0')}</span>
-                <span className="pokemonCardName">{p.name}</span>
-                <div className="pokemonCardTypes">
-                  {p.types.map(t => <span key={t} className={`typeBadge ${TYPE_CLASSES[t] || ''}`}>{t}</span>)}
-                </div>
-                <span className="pokemonCardGoal" title={p.goal}>{p.goal}</span>
-                <span className="pokemonCardDate">{p.date}</span>
-              </div>
-            ))}
-          </div>
+          <PokemonGrid collection={collection} lang={lang} t={t} />
         </section>
 
-        {/* Rival's collection */}
-        {friendCollection.length > 0 && (
-          <section className="collectionSection friendSection">
-            <div className="collectionHeader">
-              <div className="collectionTitleGroup">
-                <h2 className="collectionTitle">{t.friendTitle}</h2>
-                <span className="collectionBadge friendBadge">{friendCollection.length}</span>
-              </div>
-            </div>
-            <div className="pokemonGrid">
-              {[...friendCollection].sort((a, b) => a.id - b.id).map(p => (
-                <div key={`friend-${p.id}-${p.session}`} className="pokemonCard friendCard">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img className="pokemonCardSprite" src={p.sprite} alt={p.name} loading="lazy" />
-                  <span className="pokemonCardNumber">#{String(p.id).padStart(3, '0')}</span>
-                  <span className="pokemonCardName">{p.name}</span>
-                  <div className="pokemonCardTypes">
-                    {p.types.map(t => <span key={t} className={`typeBadge ${TYPE_CLASSES[t] || ''}`}>{t}</span>)}
-                  </div>
-                  <span className="pokemonCardDate">{p.date}</span>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-      </div>
+        <FriendCollection friendCollection={friendCollection} t={t} />
 
-      {/* Capture Modal */}
-      {showModal && (
-        <div className="modalOverlay">
-          <div className="modalCard">
-            <div className="modalHeader">
-              <p className="modalStars">{t.modalStars}</p>
-              <h2 className="modalTitle">{t.modalTitle}</h2>
-              <p className="modalGoal">&ldquo;{currentGoal}&rdquo;</p>
-            </div>
-            {(modalPhase === 'shaking' || modalPhase === 'opening') && (
-              <div className="captureStage">
-                <div className={`pokeballAnim${modalPhase === 'opening' ? ' pokeballOpening' : ''}`}>
-                  <div className="pbaTop" /><div className="pbaBand"><div className="pbaBtn" /></div><div className="pbaBottom" />
-                </div>
-              </div>
-            )}
-            {modalPhase === 'reveal' && captured && (
-              <div className="pokemonReveal">
-                <div className="revealGlow" />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img className="pokemonSprite" src={captured.sprite} alt={captured.name} />
-                <span className="revealNumber">#{String(captured.id).padStart(3, '0')}</span>
-                <h3 className="revealName">{captured.name}</h3>
-                <div className="revealTypes">
-                  {captured.types.map(tp => <span key={tp} className={`typeBadge ${TYPE_CLASSES[tp] || ''}`}>{tp}</span>)}
-                </div>
-                <div className="capturedBanner">{t.capturedBanner}</div>
-              </div>
-            )}
-            {modalPhase === 'reveal' && (
-              <button className="ctrlBtn ctrlBtnPrimary" onClick={closeModal} style={{ width: '100%' }}>
-                {t.btnContinueModal}
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+        <CaptureModal
+          showModal={showModal}
+          modalPhase={modalPhase}
+          captured={captured}
+          currentGoal={currentGoal}
+          t={t}
+          closeModal={closeModal}
+        />
+
+        <Footer />
+      </div>
     </>
   );
 }
