@@ -38,6 +38,69 @@ body {
 }
 
 /* =====================
+   Language Bar
+   ===================== */
+.langBar {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px 0;
+}
+.langBtn {
+  background: none;
+  border: none;
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: color 0.15s;
+}
+.langBtn:hover   { color: var(--dark); }
+.langBtnActive   { color: var(--red) !important; font-weight: 900; }
+.langSep         { color: var(--border); font-size: 12px; }
+
+/* =====================
+   Stats Bar
+   ===================== */
+.statsBar {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 14px 20px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.statValue {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 11px;
+  color: var(--dark);
+  white-space: nowrap;
+}
+.statLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.statDivider {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+}
+
+/* =====================
    Header
    ===================== */
 .appHeader {
@@ -207,6 +270,42 @@ body {
 .customInput:focus { border-color: var(--red); }
 
 /* =====================
+   Mode Selector (generación)
+   ===================== */
+.modeWrapper {
+  width: 100%;
+}
+.modeLabel {
+  display: block;
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--dark);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.modeRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.modeBtn {
+  padding: 5px 10px;
+  border: 2px solid var(--border);
+  border-radius: 16px;
+  background: transparent;
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.modeBtn:hover     { border-color: var(--blue); color: var(--blue); }
+.modeBtnActive     { background: var(--blue) !important; border-color: var(--blue) !important; color: #fff !important; }
+.modeBtn:disabled  { opacity: 0.5; cursor: not-allowed; }
+
+/* =====================
    Controls
    ===================== */
 .controlsRow {
@@ -243,13 +342,41 @@ body {
    Collection
    ===================== */
 .collectionSection { margin-top: 28px; }
-.collectionHeader  { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.collectionHeader  {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.collectionTitleGroup { display: flex; align-items: center; gap: 10px; }
 .collectionTitle   { font-family: 'Press Start 2P', monospace; font-size: 11px; color: var(--dark); }
 .collectionBadge   {
   background: var(--red); color: #fff;
   font-size: 12px; font-weight: 800;
   padding: 2px 10px; border-radius: 20px;
 }
+.collectionActions { display: flex; gap: 8px; flex-wrap: wrap; }
+.actionBtn {
+  padding: 6px 12px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dark);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.actionBtn:hover      { border-color: var(--dark); }
+.actionBtnSuccess     { background: #4ADE80 !important; border-color: #4ADE80 !important; color: #fff !important; }
+
+/* Friend section */
+.friendSection { margin-top: 20px; }
+.friendBadge   { background: var(--blue) !important; }
+.friendCard    { border-color: var(--blue) !important; opacity: 0.9; }
 .emptyState {
   grid-column: 1 / -1;
   display: flex;
