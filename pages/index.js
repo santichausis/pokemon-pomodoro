@@ -3,17 +3,19 @@ import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { GENERATIONS, TYPE_CLASSES } from '@/lib/constants';
 import { playCompletionSound, fetchRandomPokemon, getDateStr, copyToClipboard } from '@/lib/utils';
+import { checkAchievements } from '@/lib/achievements';
+import { getRarity } from '@/lib/rarity';
+import { playSoundEffect, getSoundSettings } from '@/lib/soundEffects';
 
-// Dynamic import for cookie consent
+// Dynamic imports
 const CookieConsent = dynamic(() => import('@/components/CookieConsent'), { ssr: false });
-
-const CIRCUMFERENCE = 2 * Math.PI * 104;
-
-// Dynamic imports for heavy components
 const CaptureModal = dynamic(() => import('@/components/CaptureModal'), { ssr: false });
 const PokemonGrid = dynamic(() => import('@/components/PokemonGrid'), { ssr: false });
 const FriendCollection = dynamic(() => import('@/components/FriendCollection'), { ssr: false });
 const Footer = dynamic(() => import('@/components/Footer'), { ssr: false });
+const AchievementBadge = dynamic(() => import('@/components/AchievementBadge'), { ssr: false });
+
+const CIRCUMFERENCE = 2 * Math.PI * 104;
 
 const T = {
   en: {
@@ -105,6 +107,8 @@ export default function Home() {
   const [currentGoal, setCurrentGoal] = useState('');
 
   const [copied, setCopied] = useState(false);
+  const [achievements, setAchievements] = useState([]);
+  const [soundsEnabled, setSoundsEnabled] = useState(true);
 
   const intervalRef   = useRef(null);
   const totalSecRef   = useRef(totalSec);
@@ -112,6 +116,12 @@ export default function Home() {
   const importRef     = useRef(null);
   totalSecRef.current = totalSec;
   modeRef.current     = mode;
+
+  // Load sound settings on mount
+  useEffect(() => {
+    const settings = getSoundSettings();
+    setSoundsEnabled(settings.soundsEnabled);
+  }, []);
 
   const statusLabel = {
     ready: t.statusReady, focusing: t.statusFocusing,
@@ -206,6 +216,10 @@ export default function Home() {
     try { pokemon = await fetchRandomPokemon(GENERATIONS[modeRef.current]?.range || [1, 898]); }
     catch (_) { pokemon = { id: 25, name: 'Pikachu', sprite: '', types: ['electric'] }; }
 
+    // Add rarity to pokemon
+    const rarity = getRarity(pokemon.id);
+    pokemon = { ...pokemon, rarity };
+
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
       const tSnap = T[lang] || T.en;
       new Notification(tSnap.notifTitle, { body: tSnap.notifBody(pokemon.name), icon: '/favicon.ico' });
@@ -216,15 +230,27 @@ export default function Home() {
       setTimeout(() => {
         setCaptured(pokemon);
         setModalPhase('reveal');
+        playSoundEffect('pokemon-catch', soundsEnabled);
+
         setCollection(prev => {
-          const e = { ...pokemon, goal: currentGoal, date: getDateStr(), session: Date.now() };
+          const e = { ...pokemon, goal: currentGoal, date: getDateStr(), session: Date.now(), achievements: [] };
           const next = [e, ...prev];
+
+          // Check for new achievements
+          const stats = { totalSessions: sessions.length + 1, timeStr: '0m', streak: 0, uniquePokemon: new Set(next.map(p => p.id)).size };
+          const newAchievements = checkAchievements(stats, next, sessions);
+          setAchievements(newAchievements);
+
+          if (newAchievements.length > 0) {
+            playSoundEffect('achievement', soundsEnabled);
+          }
+
           localStorage.setItem('poke-collection', JSON.stringify(next));
           return next;
         });
       }, 450);
     }, 2200);
-  }, [currentGoal, lang]);
+  }, [currentGoal, lang, sessions, soundsEnabled]);
 
   const trackEvent = useCallback((eventName, eventParams = {}) => {
     if (typeof window !== 'undefined' && window.gtag) {
@@ -336,6 +362,17 @@ export default function Home() {
             <span className="themeSep">|</span>
             <button className={`themeBtn${theme === 'dark' ? ' themeBtnActive' : ''}`} onClick={() => setTheme('dark')} title="Dark mode">🌙</button>
           </div>
+          <button
+            className={`soundToggle${soundsEnabled ? ' enabled' : ''}`}
+            onClick={() => {
+              setSoundsEnabled(!soundsEnabled);
+              localStorage.setItem('poke-sounds-enabled', !soundsEnabled ? 'true' : 'false');
+              playSoundEffect('achievement', !soundsEnabled);
+            }}
+            title={soundsEnabled ? 'Sounds on' : 'Sounds off'}
+          >
+            {soundsEnabled ? '🔊' : '🔇'}
+          </button>
         </div>
 
         <header className="appHeader">
@@ -357,6 +394,14 @@ export default function Home() {
           <div className="statDivider" />
           <div className="statItem"><span className="statValue">{stats.uniquePokemon}</span><span className="statLabel">{t.stats[3]}</span></div>
         </div>
+
+        {achievements.length > 0 && (
+          <div className="achievementsBar" style={{ padding: '14px 20px', background: 'var(--card)', borderRadius: 'var(--radius)', marginBottom: '14px', boxShadow: 'var(--shadow)', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+            {achievements.map(achId => (
+              <AchievementBadge key={achId} achievementId={achId} size="small" />
+            ))}
+          </div>
+        )}
 
         <main className="mainCard">
           <div className="goalWrapper">

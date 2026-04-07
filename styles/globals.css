@@ -720,3 +720,160 @@ body {
   border-radius: 20px;
   box-shadow: 0 3px 10px rgba(255,203,5,0.4);
 }
+
+/* =====================
+   Achievements
+   ===================== */
+.achievementBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--card);
+  border: 2px solid var(--border);
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.achievementBadge:hover {
+  transform: scale(1.15);
+  border-color: var(--red);
+  box-shadow: 0 0 15px rgba(238, 21, 21, 0.3);
+}
+.achievementBadgeLarge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, var(--card) 0%, rgba(238, 21, 21, 0.1) 100%);
+  border: 2px solid var(--red);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.achievementBadgeLarge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(238, 21, 21, 0.3);
+}
+.achievementIcon {
+  font-size: 24px;
+  display: inline-block;
+  animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.achievementName {
+  font-weight: 800;
+  font-size: 12px;
+  color: var(--red);
+}
+
+/* =====================
+   Pokemon Rarity
+   ===================== */
+.pokemonCardRare {
+  border-color: var(--yellow) !important;
+  box-shadow: 0 0 20px rgba(255, 203, 5, 0.3) !important;
+}
+.pokemonCardUltraRare {
+  border-color: #FF1493 !important;
+  box-shadow: 0 0 25px rgba(255, 20, 147, 0.4) !important;
+}
+.pokemonCardLegendary {
+  border-color: #FFD700 !important;
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.3) !important;
+  animation: legendaryGlow 2s ease-in-out infinite;
+}
+@keyframes legendaryGlow {
+  0%, 100% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.8), 0 0 80px rgba(255, 215, 0, 0.5); }
+}
+.rarityBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: 800;
+  color: white;
+  text-transform: uppercase;
+}
+.rarityBadgeCommon { background: #9E9E9E; }
+.rarityBadgeUncommon { background: #4CAF50; }
+.rarityBadgeRare { background: #FF9800; }
+.rarityBadgeLegendary { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); }
+
+/* =====================
+   Sound Settings
+   ===================== */
+.soundToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  background: var(--bg);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.soundToggle:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+.soundToggle.enabled {
+  background: var(--red);
+  border-color: var(--red);
+  color: white;
+}
+
+/* =====================
+   Capture Animation Enhancements
+   ===================== */
+.pokeballAnim {
+  animation: shake 0.5s ease-in-out infinite, wobble 2s ease-in-out infinite;
+}
+@keyframes wobble {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(-2deg) translateY(-2px); }
+  50% { transform: rotate(2deg) translateY(2px); }
+  75% { transform: rotate(-2deg) translateY(-2px); }
+}
+.pokemonReveal::before {
+  content: '';
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.8) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: glow 0.8s ease-out;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+@keyframes glow {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+  to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2);
+  }
+}
+.capturedBanner {
+  animation: slideUp 0.5s ease, pulse 1.5s ease-in-out 0.5s;
+}
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0) rotate(-180deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
