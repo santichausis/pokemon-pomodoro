@@ -1,6 +1,6 @@
 # Pokémon Pomodoro
 
-A Pokémon-themed Pomodoro timer. Complete focus sessions, catch surprise Pokémon, and build your personal Pokédex.
+A Pokémon-themed Pomodoro timer that gamifies productivity. Complete focus sessions, catch surprise Pokémon, and build your personal Pokédex. Track stats, share collections, and compete with friends.
 
 ## How it works
 
@@ -12,19 +12,19 @@ A Pokémon-themed Pomodoro timer. Complete focus sessions, catch surprise Pokém
 
 ## Features
 
-- Animated circular timer with SVG ring
-- Visual states: red → yellow (last minute) → green (complete)
-- Capture animation: shaking Pokéball that opens on reveal
-- 898 possible Pokémon via [PokéAPI](https://pokeapi.co/)
-- Generation filter — restrict captures to Gen I through Gen VIII
-- Pokédex sorted by Pokémon number
-- Personal stats: sessions, total focus time, day streak, unique Pokémon
-- Browser notifications when the timer ends
-- Share your Pokédex via URL (open on a friend's device to compare collections)
-- Export / import your collection as JSON
-- EN / ES language toggle
-- Completion sound via Web Audio API
-- Persistent collection in `localStorage`
+- **Timer**: Animated circular timer with SVG ring, visual states (red → yellow → green)
+- **Pokémon Catching**: Shaking Pokéball animation + reveal, 898 possible Pokémon via [PokéAPI](https://pokeapi.co/)
+- **Generation Filter**: Restrict captures to Gen I through Gen VIII
+- **Pokédex**: Sorted by Pokémon ID, includes capture goal and date
+- **Personal Stats**: Sessions completed, total focus time, day streak, unique Pokémon caught
+- **Notifications**: Browser notifications when timer ends (with permission)
+- **Sharing**: Share your Pokédex via URL to compare collections with friends
+- **Import/Export**: Backup your collection as JSON
+- **Language Support**: EN / ES toggle with auto-detection based on browser locale
+- **Dark Mode**: Light/dark theme toggle with system preference detection
+- **Analytics**: Optional Google Analytics (GA4) with cookie consent
+- **Sounds**: Completion sound via Web Audio API
+- **Persistent Storage**: Collection saved to `localStorage`
 
 ## Stack
 
@@ -51,10 +51,18 @@ Open [http://localhost:3000](http://localhost:3000).
 | `#003A70` | Dark blue — titles, key text |
 | `#3D7DCA` | Pokémon blue — generation selector accent |
 
-## Roadmap
+## Completed Features
 
-- Personal stats dashboard (sessions, total time, streaks, unique count) ✅
-- Browser notifications when the timer ends ✅
-- Generation filter (catch Pokémon from specific generations) ✅
-- Share your Pokédex via URL for rival comparisons ✅
-- Export / import JSON backup ✅
+- ✅ Personal stats dashboard (sessions, total time, streaks, unique count)
+- ✅ Browser notifications when the timer ends
+- ✅ Generation filter (catch Pokémon from specific generations)
+- ✅ Share your Pokédex via URL for rival comparisons
+- ✅ Export / import JSON backup
+- ✅ Bilingual support (EN/ES) with auto-detection
+- ✅ Dark Mode with theme toggle and system preference detection
+- ✅ Google Analytics integration with cookie consent
+- ✅ Code splitting and lazy loading for performance
+
+## Contributing
+
+Found a bug? Have an idea? [Contribute on GitHub](https://github.com/santichausis/pokemon-pomodoro) — pull requests welcome!
