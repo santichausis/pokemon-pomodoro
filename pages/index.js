@@ -4,6 +4,9 @@ import dynamic from 'next/dynamic';
 import { GENERATIONS, TYPE_CLASSES } from '@/lib/constants';
 import { playCompletionSound, fetchRandomPokemon, getDateStr, copyToClipboard } from '@/lib/utils';
 
+// Dynamic import for cookie consent
+const CookieConsent = dynamic(() => import('@/components/CookieConsent'), { ssr: false });
+
 const CIRCUMFERENCE = 2 * Math.PI * 104;
 
 // Dynamic imports for heavy components
@@ -79,6 +82,7 @@ const T = {
 
 export default function Home() {
   const [lang, setLang]             = useState('en');
+  const [theme, setTheme]           = useState('light');
   const t = T[lang];
 
   const [totalSec, setTotalSec]     = useState(25 * 60);
@@ -116,8 +120,40 @@ export default function Home() {
 
   useEffect(() => {
     const saved = localStorage.getItem('poke-lang');
-    if (saved === 'en' || saved === 'es') setLang(saved);
+    if (saved === 'en' || saved === 'es') {
+      setLang(saved);
+    } else {
+      // Auto-detect browser language
+      if (typeof navigator !== 'undefined') {
+        const browserLang = navigator.language || navigator.userLanguage;
+        const detectedLang = browserLang.startsWith('es') ? 'es' : 'en';
+        setLang(detectedLang);
+        localStorage.setItem('poke-lang', detectedLang);
+      }
+    }
   }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('poke-theme');
+    if (saved === 'light' || saved === 'dark') {
+      setTheme(saved);
+    } else {
+      // Auto-detect system preference
+      if (typeof window !== 'undefined') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const detected = prefersDark ? 'dark' : 'light';
+        setTheme(detected);
+        localStorage.setItem('poke-theme', detected);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('poke-theme', theme);
+    }
+  }, [theme]);
 
   useEffect(() => {
     const c = localStorage.getItem('poke-collection');
@@ -158,6 +194,7 @@ export default function Home() {
   const handleComplete = useCallback(async () => {
     setRunning(false);
     setStatusKey('done');
+    trackEvent('timer_complete', { duration_min: totalSec / 60, goal: currentGoal });
     playCompletionSound();
 
     const entry = { date: getDateStr(), duration: totalSecRef.current, goal: currentGoal };
@@ -189,6 +226,12 @@ export default function Home() {
     }, 2200);
   }, [currentGoal, lang]);
 
+  const trackEvent = useCallback((eventName, eventParams = {}) => {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', eventName, eventParams);
+    }
+  }, []);
+
   const startPause = useCallback(() => {
     if (running) {
       stopTimer(); setRunning(false); setStatusKey('paused');
@@ -198,6 +241,7 @@ export default function Home() {
       }
       setCurrentGoal(goal || 'No goal set');
       setRunning(true); setStatusKey('focusing');
+      trackEvent('timer_start', { duration_min: totalSec / 60 });
       intervalRef.current = setInterval(() => {
         setRemaining(prev => {
           if (prev <= 1) { clearInterval(intervalRef.current); intervalRef.current = null; return 0; }
@@ -205,7 +249,7 @@ export default function Home() {
         });
       }, 1000);
     }
-  }, [running, goal, stopTimer]);
+  }, [running, goal, stopTimer, totalSec, trackEvent]);
 
   useEffect(() => {
     if (remaining === 0 && running) { setRunning(false); handleComplete(); }
@@ -218,6 +262,7 @@ export default function Home() {
   const setDuration = min => {
     stopTimer(); setRunning(false); setActiveDur(min);
     setTotalSec(min * 60); setRemaining(min * 60); setStatusKey('ready');
+    trackEvent('duration_selected', { duration_min: min });
   };
 
   const applyCustom = () => {
@@ -234,6 +279,7 @@ export default function Home() {
     const blob = new Blob([JSON.stringify({ collection, sessions }, null, 2)], { type: 'application/json' });
     const url  = URL.createObjectURL(blob);
     const a    = Object.assign(document.createElement('a'), { href: url, download: 'pokemodoro-backup.json' });
+    trackEvent('export_collection', { pokemon_count: collection.length, sessions_count: sessions.length });
     a.click(); URL.revokeObjectURL(url);
   }
 
@@ -243,8 +289,15 @@ export default function Home() {
     reader.onload = ev => {
       try {
         const data = JSON.parse(ev.target.result);
-        if (data.collection) { setCollection(data.collection); localStorage.setItem('poke-collection', JSON.stringify(data.collection)); }
-        if (data.sessions)   { setSessions(data.sessions);     localStorage.setItem('poke-sessions',    JSON.stringify(data.sessions)); }
+        if (data.collection) {
+          setCollection(data.collection);
+          localStorage.setItem('poke-collection', JSON.stringify(data.collection));
+          trackEvent('import_collection', { pokemon_count: data.collection.length });
+        }
+        if (data.sessions) {
+          setSessions(data.sessions);
+          localStorage.setItem('poke-sessions', JSON.stringify(data.sessions));
+        }
       } catch (_) {}
     };
     reader.readAsText(file);
@@ -256,6 +309,7 @@ export default function Home() {
     const url = `${window.location.origin}${window.location.pathname}#share=${encoded}`;
     try {
       await copyToClipboard(url);
+      trackEvent('share_collection', { pokemon_count: collection.length });
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch (_) {}
@@ -277,6 +331,11 @@ export default function Home() {
           <button className={`langBtn${lang === 'en' ? ' langBtnActive' : ''}`} onClick={() => { setLang('en'); localStorage.setItem('poke-lang','en'); }}>EN</button>
           <span className="langSep">|</span>
           <button className={`langBtn${lang === 'es' ? ' langBtnActive' : ''}`} onClick={() => { setLang('es'); localStorage.setItem('poke-lang','es'); }}>ES</button>
+          <div className="themeBar">
+            <button className={`themeBtn${theme === 'light' ? ' themeBtnActive' : ''}`} onClick={() => setTheme('light')} title="Light mode">☀️</button>
+            <span className="themeSep">|</span>
+            <button className={`themeBtn${theme === 'dark' ? ' themeBtnActive' : ''}`} onClick={() => setTheme('dark')} title="Dark mode">🌙</button>
+          </div>
         </div>
 
         <header className="appHeader">
@@ -386,6 +445,7 @@ export default function Home() {
         />
 
         <Footer />
+        <CookieConsent />
       </div>
     </>
   );
