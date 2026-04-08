@@ -26,7 +26,7 @@
   --card:      #1E1E1E;
   --border:    #2D2D2D;
   --text:      #E8EAED;
-  --muted:     #9CA3AF;
+  --muted:     #B8C5D6;
   --shadow:    0 4px 24px rgba(0,0,0,0.5);
   --radius:    16px;
 }
@@ -551,40 +551,60 @@ body {
 .pokemonCard {
   background: var(--card);
   border-radius: 14px;
-  padding: 14px 10px 12px;
+  padding: 16px 12px;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   border: 2px solid transparent;
-  transition: transform 0.15s, border-color 0.15s;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   animation: cardIn 0.4s ease;
+  min-height: 240px;
+  position: relative;
+  cursor: pointer;
 }
-.pokemonCard:hover { transform: translateY(-3px); border-color: var(--yellow); }
+.pokemonCard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(238,21,21,0.05) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+.pokemonCard:hover {
+  transform: translateY(-4px);
+  border-color: var(--red);
+  box-shadow: 0 12px 28px rgba(238,21,21,0.2);
+}
+.pokemonCard:hover::after {
+  opacity: 1;
+}
 
 @keyframes cardIn {
   from { opacity: 0; transform: scale(0.85) translateY(10px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 
-.pokemonCardSprite { width: 80px; height: 80px; object-fit: contain; }
-.pokemonCardNumber { font-size: 10px; font-weight: 700; color: var(--muted); }
-.pokemonCardName   { font-size: 13px; font-weight: 800; color: var(--dark); text-align: center; }
+.pokemonCardSprite { width: 80px; height: 80px; object-fit: contain; margin-bottom: 4px; }
+.pokemonCardNumber { font-size: 10px; font-weight: 600; color: var(--muted); }
+.pokemonCardName   { font-size: 16px; font-weight: 800; color: var(--dark); text-align: center; }
 .pokemonCardTypes  { display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
 .pokemonCardGoal   {
-  font-size: 10px; color: var(--muted); font-weight: 600;
+  font-size: 11px; color: var(--muted); font-weight: 600;
   text-align: center; font-style: italic;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  max-width: 110px;
+  white-space: normal; overflow: visible;
+  min-height: 22px;
 }
 .pokemonCardDate  {
-  font-size: 9px; color: #B0B8C9; font-weight: 700;
+  font-size: 9px; color: var(--muted); font-weight: 700;
   text-align: center;
 }
 
 /* Type badges */
-.typeBadge    { font-size: 9px; font-weight: 800; padding: 2px 7px; border-radius: 10px; color: #fff; text-transform: uppercase; }
+.typeBadge    { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 10px; color: #fff; text-transform: uppercase; }
 .typeNormal   { background: #9FA19F; }
 .typeFire     { background: #E62829; }
 .typeWater    { background: #2980EF; }
@@ -627,9 +647,9 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-  animation: modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  animation: modalIn 0.35s cubic-bezier(0.2,0.8,0.3,1);
 }
 @keyframes modalIn {
   from { opacity: 0; transform: scale(0.7); }
@@ -637,8 +657,8 @@ body {
 }
 .modalHeader { text-align: center; }
 .modalStars  { color: var(--yellow); font-size: 16px; margin-bottom: 8px; letter-spacing: 4px; }
-.modalTitle  { font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--dark); line-height: 1.6; margin-bottom: 10px; }
-.modalGoal   { font-size: 13px; font-weight: 700; color: var(--muted); font-style: italic; }
+.modalTitle  { font-family: 'Press Start 2P', monospace; font-size: 14px; color: var(--dark); line-height: 1.4; letter-spacing: 0.5px; margin-bottom: 10px; }
+.modalGoal   { font-size: 12px; font-weight: 600; color: var(--muted); font-style: italic; }
 
 .captureStage {
   display: flex;
@@ -681,7 +701,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   position: relative;
 }
 .revealGlow {
@@ -695,9 +715,10 @@ body {
 .pokemonSprite {
   width: 150px; height: 150px;
   object-fit: contain;
-  animation: floatPoke 3s ease-in-out infinite, revealPoke 0.5s ease;
+  animation: revealPoke 0.5s ease, floatPoke 3s ease-in-out infinite 0.5s;
   position: relative;
   z-index: 1;
+  filter: drop-shadow(0 8px 16px rgba(255,203,5,0.3));
 }
 @keyframes floatPoke {
   0%, 100% { transform: translateY(0); }
@@ -707,18 +728,41 @@ body {
   from { opacity: 0; transform: scale(0.5) translateY(20px); }
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
-.revealNumber { font-family: 'Press Start 2P', monospace; font-size: 9px; color: var(--muted); }
-.revealName   { font-family: 'Press Start 2P', monospace; font-size: 14px; color: var(--dark); }
-.revealTypes  { display: flex; gap: 6px; }
-.capturedBanner {
-  margin-top: 4px;
-  background: var(--yellow);
+@keyframes revealFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.revealNumber {
+  font-family: 'Nunito', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0.5px;
+  animation: revealFadeIn 0.4s ease-out 0.3s both;
+}
+.revealName   {
+  font-family: 'Nunito', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
   color: var(--dark);
-  font-size: 13px;
+  letter-spacing: 0.5px;
+  animation: revealFadeIn 0.4s ease-out 0.4s both;
+}
+.revealTypes  {
+  display: flex;
+  gap: 6px;
+  animation: revealFadeIn 0.4s ease-out 0.5s both;
+}
+.capturedBanner {
+  margin-top: 8px;
+  background: #FFE135;
+  color: #1A1A2E;
+  font-size: 14px;
   font-weight: 900;
-  padding: 6px 20px;
+  padding: 8px 20px;
   border-radius: 20px;
-  box-shadow: 0 3px 10px rgba(255,203,5,0.4);
+  box-shadow: 0 3px 10px rgba(255,225,53,0.4);
+  animation: slideUp 0.4s ease-out 0.6s both, pulse 1.5s ease-in-out 0.9s;
 }
 
 /* =====================
@@ -793,17 +837,52 @@ body {
   position: absolute;
   top: 8px;
   right: 8px;
-  padding: 2px 6px;
+  padding: 4px 8px;
   border-radius: 10px;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   color: white;
   text-transform: uppercase;
+  letter-spacing: 0.5px;
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
 }
-.rarityBadgeCommon { background: #9E9E9E; }
-.rarityBadgeUncommon { background: #4CAF50; }
-.rarityBadgeRare { background: #FF9800; }
-.rarityBadgeLegendary { background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); }
+.rarityBadgeCommon {
+  background: rgba(158, 158, 158, 0.7);
+  opacity: 0.7;
+}
+.rarityBadgeUncommon {
+  background: #4CAF50;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.3);
+}
+.rarityBadgeRare {
+  background: linear-gradient(135deg, #FF9800 0%, #FFB74D 100%);
+  box-shadow: 0 0 12px rgba(255, 152, 0, 0.4);
+  font-weight: 900;
+}
+.rarityBadgeUltraRare {
+  background: linear-gradient(135deg, #FF1493 0%, #FF69B4 100%);
+  box-shadow: 0 0 14px rgba(255, 20, 147, 0.5);
+  font-weight: 900;
+  animation: rarityPulse 2.5s ease-in-out infinite;
+}
+.rarityBadgeLegendary {
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.6);
+  font-weight: 900;
+  animation: rarityPulse 2s ease-in-out infinite;
+}
+
+/* =====================
+   Pokemon Card Sprite Wrapper
+   ===================== */
+.pokemonCardSpriteWrapper {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
 
 /* =====================
    Sound Settings
@@ -836,7 +915,7 @@ body {
    Capture Animation Enhancements
    ===================== */
 .pokeballAnim {
-  animation: shake 0.5s ease-in-out infinite, wobble 2s ease-in-out infinite;
+  animation: shake 0.5s ease-in-out 3, wobble 2s ease-in-out infinite;
 }
 @keyframes wobble {
   0%, 100% { transform: rotate(0deg) translateY(0); }
@@ -877,3 +956,65 @@ body {
 @keyframes popIn {
   0% { opacity: 0; transform: scale(0) rotate(-180deg); }
   100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes rarityPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 16px rgba(255, 215, 0, 0.6); }
+  50% { opacity: 0.9; box-shadow: 0 0 24px rgba(255, 215, 0, 0.8); }
+}
+
+/* =====================
+   Responsive Breakpoints
+   ===================== */
+@media (max-width: 480px) {
+  .pokemonGrid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+  }
+  .pokemonCard {
+    padding: 12px 10px;
+    min-height: 220px;
+  }
+  .pokemonCardSprite {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 2px;
+  }
+  .pokemonCardName {
+    font-size: 14px;
+  }
+  .pokemonCardNumber {
+    font-size: 9px;
+  }
+  .pokemonCardGoal {
+    font-size: 10px;
+  }
+  .typeBadge {
+    font-size: 9px;
+    padding: 3px 8px;
+  }
+  .pokemonCardDate {
+    font-size: 8px;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  .pokemonGrid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+  }
+  .pokemonCard {
+    padding: 14px 11px;
+    min-height: 230px;
+  }
+  .pokemonCardSprite {
+    width: 70px;
+    height: 70px;
+    margin-bottom: 3px;
+  }
+  .pokemonCardName {
+    font-size: 15px;
+  }
+  .pokemonCardGoal {
+    font-size: 10px;
+  }
+}

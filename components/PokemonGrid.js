@@ -28,7 +28,7 @@ export default function PokemonGrid({ collection, lang, t }) {
         const rarity = getRarity(p.id);
         return (
           <div key={`${p.id}-${p.session}`} className={getRarityClass(p.id)}>
-            <div style={{ position: 'relative' }}>
+            <div className="pokemonCardSpriteWrapper">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img className="pokemonCardSprite" src={p.sprite} alt={p.name} loading="lazy" />
               <span className={`rarityBadge rarityBadge${rarity.tier.charAt(0).toUpperCase() + rarity.tier.slice(1).replace('-', '')}`}>
