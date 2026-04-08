@@ -161,47 +161,50 @@ body {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  gap: 8px;
-  padding: 12px 8px 0;
+  gap: 2px;
+  padding: 14px 0 0;
 }
 .langBtn {
   background: none;
   border: none;
   font-family: 'Nunito', sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--muted);
   cursor: pointer;
-  padding: 2px 4px;
-  transition: color 0.15s;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
 }
-.langBtn:hover   { color: var(--dark); }
-.langBtnActive   { color: var(--red) !important; font-weight: 900; }
-.langSep         { color: var(--border); font-size: 12px; }
+.langBtn:hover   { color: var(--dark); background: var(--border); }
+.langBtnActive   { color: var(--red) !important; font-weight: 900; background: rgba(238,21,21,0.08) !important; }
+.langSep         { color: var(--border); font-size: 10px; margin: 0 2px; }
 
 /* =====================
    Theme Bar
    ===================== */
 .themeBar {
   display: flex;
-  justify-content: flex-end;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   padding: 0;
+  margin-left: 6px;
+  padding-left: 8px;
+  border-left: 1px solid var(--border);
 }
 .themeBtn {
   background: none;
   border: none;
-  font-family: 'Nunito', sans-serif;
-  font-size: 14px;
-  color: var(--muted);
+  font-size: 13px;
   cursor: pointer;
-  padding: 2px 6px;
-  transition: color 0.15s, transform 0.15s;
+  padding: 4px 6px;
+  border-radius: 6px;
+  opacity: 0.5;
+  transition: opacity 0.15s, transform 0.15s, background 0.15s;
 }
-.themeBtn:hover   { color: var(--dark); transform: scale(1.1); }
-.themeBtnActive   { color: var(--red) !important; transform: scale(1.15); }
-.themeSep         { color: var(--border); font-size: 12px; }
+.themeBtn:hover   { opacity: 0.8; background: var(--border); transform: scale(1.1); }
+.themeBtnActive   { opacity: 1 !important; transform: scale(1.1); }
+.themeSep         { color: var(--border); font-size: 10px; margin: 0 2px; }
 
 /* =====================
    Stats Bar
@@ -209,7 +212,7 @@ body {
 .statsBar {
   background: var(--card);
   border-radius: var(--radius);
-  padding: 14px 20px;
+  padding: 16px 20px;
   margin-bottom: 14px;
   box-shadow: var(--shadow);
   display: flex;
@@ -220,24 +223,26 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
 }
 .statValue {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 11px;
+  font-family: 'Nunito', sans-serif;
+  font-size: 20px;
+  font-weight: 900;
   color: var(--dark);
   white-space: nowrap;
+  line-height: 1;
 }
 .statLabel {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 9px;
+  font-weight: 800;
   color: var(--muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
 }
 .statDivider {
   width: 1px;
-  height: 32px;
+  height: 36px;
   background: var(--border);
 }
 
@@ -248,8 +253,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 28px 8px 24px;
-  gap: 12px;
+  padding: 20px 8px 24px;
+  gap: 16px;
 }
 .appTitle {
   font-family: 'Press Start 2P', monospace;
@@ -262,17 +267,19 @@ body {
 .appTitle span { color: var(--red); }
 
 .headerPokeball {
-  width: 40px; height: 40px;
+  width: 44px; height: 44px;
   border-radius: 50%;
-  border: 3px solid #222;
+  border: 3px solid var(--text);
   overflow: hidden;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+  transition: transform 0.2s ease;
 }
+.headerPokeball:hover { transform: rotate(20deg) scale(1.05); }
 .hpbTop    { background: var(--red); height: 44%; }
-.hpbBottom { background: #fff; height: 44%; }
-.hpbBand   { height: 12%; background: #222; display: flex; align-items: center; justify-content: center; }
-.hpbBtn    { width: 10px; height: 10px; background: #fff; border-radius: 50%; border: 2px solid #222; }
+.hpbBottom { background: var(--card); height: 44%; }
+.hpbBand   { height: 12%; background: var(--text); display: flex; align-items: center; justify-content: center; }
+.hpbBtn    { width: 10px; height: 10px; background: var(--card); border-radius: 50%; border: 2px solid var(--text); }
 
 /* =====================
    Main Card
@@ -313,7 +320,7 @@ body {
   transition: border-color 0.2s;
 }
 .goalInput:focus { border-color: var(--red); }
-.goalInput::placeholder { color: #B0B8C9; }
+.goalInput::placeholder { color: var(--muted); opacity: 0.6; }
 
 /* =====================
    Timer Ring
@@ -332,7 +339,7 @@ body {
 }
 .timerTrack {
   fill: none;
-  stroke: #F0F0F0;
+  stroke: var(--border);
   stroke-width: 12;
 }
 .timerRing {
@@ -407,6 +414,8 @@ body {
   font-weight: 700;
   outline: none;
   text-align: center;
+  color: var(--text);
+  background: var(--bg);
 }
 .customInput:focus { border-color: var(--red); }
 
@@ -431,12 +440,12 @@ body {
   flex-wrap: wrap;
 }
 .modeBtn {
-  padding: 5px 10px;
+  padding: 6px 12px;
   border: 2px solid var(--border);
   border-radius: 16px;
   background: transparent;
   font-family: 'Nunito', sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--muted);
   cursor: pointer;
@@ -482,7 +491,7 @@ body {
 /* =====================
    Collection
    ===================== */
-.collectionSection { margin-top: 28px; }
+.collectionSection { margin-top: 32px; }
 .collectionHeader  {
   display: flex;
   align-items: center;
@@ -496,23 +505,24 @@ body {
 .collectionBadge   {
   background: var(--red); color: #fff;
   font-size: 12px; font-weight: 800;
-  padding: 2px 10px; border-radius: 20px;
+  padding: 3px 11px; border-radius: 20px;
+  min-width: 28px; text-align: center;
 }
 .collectionActions { display: flex; gap: 8px; flex-wrap: wrap; }
 .actionBtn {
-  padding: 6px 12px;
-  border: 2px solid var(--border);
+  padding: 7px 13px;
+  border: 1.5px solid var(--border);
   border-radius: 10px;
   background: var(--card);
   font-family: 'Nunito', sans-serif;
   font-size: 12px;
   font-weight: 700;
-  color: var(--dark);
+  color: var(--text);
   cursor: pointer;
   transition: all 0.15s;
 }
-.actionBtn:hover      { border-color: var(--dark); }
-.actionBtnSuccess     { background: #4ADE80 !important; border-color: #4ADE80 !important; color: #fff !important; }
+.actionBtn:hover      { border-color: var(--text); background: var(--bg); }
+.actionBtnSuccess     { background: #22c55e !important; border-color: #22c55e !important; color: #fff !important; }
 
 /* Friend section */
 .friendSection { margin-top: 20px; }
@@ -532,16 +542,16 @@ body {
   line-height: 1.6;
 }
 .emptyPokeball {
-  width: 56px; height: 56px;
+  width: 64px; height: 64px;
   border-radius: 50%;
-  border: 3px solid #CCC;
+  border: 3px solid var(--border);
   overflow: hidden;
   opacity: 0.4;
 }
-.epbTop    { background: #CCC; height: 44%; }
-.epbBottom { background: #fff; height: 44%; }
-.epbBand   { height: 12%; background: #CCC; display: flex; align-items: center; justify-content: center; }
-.epbBtn    { width: 14px; height: 14px; background: #fff; border-radius: 50%; border: 2px solid #CCC; }
+.epbTop    { background: var(--muted); height: 44%; }
+.epbBottom { background: var(--card); height: 44%; }
+.epbBand   { height: 12%; background: var(--border); display: flex; align-items: center; justify-content: center; }
+.epbBtn    { width: 14px; height: 14px; background: var(--card); border-radius: 50%; border: 2px solid var(--border); }
 
 .pokemonGrid {
   display: grid;
@@ -609,15 +619,15 @@ body {
 .typeFire     { background: #E62829; }
 .typeWater    { background: #2980EF; }
 .typeGrass    { background: #3FA129; }
-.typeElectric { background: #FAC000; color: #333; }
-.typeIce      { background: #3DCEF3; color: #333; }
+.typeElectric { background: #D4A017; color: #fff; }
+.typeIce      { background: #2CB5E0; color: #fff; }
 .typeFighting { background: #FF8000; }
 .typePoison   { background: #9141CB; }
 .typeGround   { background: #915121; }
-.typeFlying   { background: #81B9F1; color: #333; }
+.typeFlying   { background: #5A8FD6; color: #fff; }
 .typePsychic  { background: #EF4179; }
 .typeBug      { background: #91A119; }
-.typeRock     { background: #AFA981; color: #333; }
+.typeRock     { background: #8E8A57; color: #fff; }
 .typeGhost    { background: #704170; }
 .typeDragon   { background: #5060E1; }
 .typeDark     { background: #624D4E; }
@@ -675,9 +685,9 @@ body {
   animation: shake 0.5s ease-in-out infinite;
 }
 .pbaTop    { background: var(--red); height: 44%; }
-.pbaBottom { background: #fff; height: 44%; }
-.pbaBand   { height: 12%; background: #222; display: flex; align-items: center; justify-content: center; }
-.pbaBtn    { width: 22px; height: 22px; background: #fff; border-radius: 50%; border: 4px solid #222; }
+.pbaBottom { background: var(--card); height: 44%; }
+.pbaBand   { height: 12%; background: var(--text); display: flex; align-items: center; justify-content: center; }
+.pbaBtn    { width: 22px; height: 22px; background: var(--card); border-radius: 50%; border: 4px solid var(--text); }
 
 @keyframes shake {
   0%, 100% { transform: rotate(0deg); }
@@ -890,25 +900,24 @@ body {
 .soundToggle {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: 2px solid var(--border);
-  border-radius: 20px;
-  background: var(--bg);
-  color: var(--text);
-  font-weight: 700;
-  font-size: 12px;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  font-size: 13px;
   cursor: pointer;
-  transition: all 0.2s;
+  padding: 4px 6px;
+  opacity: 0.5;
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid var(--border);
+  transition: opacity 0.15s, background 0.15s;
 }
 .soundToggle:hover {
-  border-color: var(--red);
-  color: var(--red);
+  opacity: 0.8;
+  background: var(--border);
 }
 .soundToggle.enabled {
-  background: var(--red);
-  border-color: var(--red);
-  color: white;
+  opacity: 1;
 }
 
 /* =====================
@@ -960,6 +969,49 @@ body {
 @keyframes rarityPulse {
   0%, 100% { opacity: 1; box-shadow: 0 0 16px rgba(255, 215, 0, 0.6); }
   50% { opacity: 0.9; box-shadow: 0 0 24px rgba(255, 215, 0, 0.8); }
+}
+
+/* =====================
+   Achievements Bar
+   ===================== */
+.achievementsBar {
+  padding: 14px 20px;
+  background: var(--card);
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  border: 1px solid var(--border);
+}
+
+/* =====================
+   Focus & Accessibility
+   ===================== */
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* =====================
+   Scrollbar Polish
+   ===================== */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* =====================
+   Selection Colors
+   ===================== */
+::selection {
+  background: rgba(238, 21, 21, 0.15);
+  color: var(--text);
 }
 
 /* =====================

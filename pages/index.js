@@ -396,7 +396,7 @@ export default function Home() {
         </div>
 
         {achievements.length > 0 && (
-          <div className="achievementsBar" style={{ padding: '14px 20px', background: 'var(--card)', borderRadius: 'var(--radius)', marginBottom: '14px', boxShadow: 'var(--shadow)', display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center' }}>
+          <div className="achievementsBar">
             {achievements.map(achId => (
               <AchievementBadge key={achId} achievementId={achId} size="small" />
             ))}
