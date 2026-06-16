@@ -1,3 +1,4 @@
+import { motion } from 'motion/react';
 import { TYPE_CLASSES } from '@/lib/constants';
 
 export default function CaptureModal({
@@ -11,8 +12,18 @@ export default function CaptureModal({
   if (!showModal) return null;
 
   return (
-    <div className="modalOverlay">
-      <div className="modalCard">
+    <motion.div
+      className="modalOverlay"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.25 }}
+    >
+      <motion.div
+        className="modalCard"
+        initial={{ opacity: 0, scale: 0.7, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 320, damping: 22 }}
+      >
         <div className="modalHeader">
           <p className="modalStars">{t.modalStars}</p>
           <h2 className="modalTitle">{t.modalTitle}</h2>
@@ -46,11 +57,17 @@ export default function CaptureModal({
         )}
 
         {modalPhase === 'reveal' && (
-          <button className="ctrlBtn ctrlBtnPrimary" onClick={closeModal} style={{ width: '100%' }}>
+          <motion.button
+            className="ctrlBtn ctrlBtnPrimary"
+            onClick={closeModal}
+            style={{ width: '100%' }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+          >
             {t.btnContinueModal}
-          </button>
+          </motion.button>
         )}
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

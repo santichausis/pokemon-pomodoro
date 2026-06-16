@@ -1,3 +1,4 @@
+import { motion } from 'motion/react';
 import { TYPE_CLASSES } from '@/lib/constants';
 import { getRarity } from '@/lib/rarity';
 
@@ -35,9 +36,9 @@ export default function PokemonGrid({ collection, lang, t }) {
     return rarityMap[rarity.tier] || 'pokemonCard';
   };
 
-  return (
-    <div className="pokemonGrid">
-      {collection.length === 0 ? (
+  if (collection.length === 0) {
+    return (
+      <div className="pokemonGrid">
         <div className="emptyState">
           <div className="emptyPokeball">
             <div className="epbTop" />
@@ -46,14 +47,27 @@ export default function PokemonGrid({ collection, lang, t }) {
           </div>
           <p>{t.emptyLine1}<br />{t.emptyLine2}</p>
         </div>
-      ) : [...collection].sort((a, b) => a.id - b.id).map(p => {
+      </div>
+    );
+  }
+
+  return (
+    <motion.div className="pokemonGrid" layout>
+      {[...collection].sort((a, b) => a.id - b.id).map((p, i) => {
         const rarity = getRarity(p.id);
         const primaryType = p.types[0]?.toLowerCase();
         const panelBg = TYPE_PANEL_COLORS[primaryType] || '#9E9E9E';
 
         return (
-          <div key={`${p.id}-${p.session}`} className={getRarityClass(p.id)}>
-
+          <motion.div
+            key={`${p.id}-${p.session}`}
+            className={getRarityClass(p.id)}
+            layout
+            initial={{ opacity: 0, y: 14, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.32, delay: Math.min(i * 0.025, 0.4), ease: [0.2, 0.8, 0.3, 1] }}
+            whileHover={{ y: -4, transition: { duration: 0.18 } }}
+          >
             {/* ── Left: info ── */}
             <div className="pokemonCardInfo">
               <span className="pokemonCardNumber">
@@ -94,10 +108,9 @@ export default function PokemonGrid({ collection, lang, t }) {
                 {rarity.tier === 'legendary' ? '★' : rarity.tier === 'ultra-rare' ? '◆' : rarity.tier === 'uncommon' ? '●' : ''}
               </span>
             </div>
-
-          </div>
+          </motion.div>
         );
       })}
-    </div>
+    </motion.div>
   );
 }

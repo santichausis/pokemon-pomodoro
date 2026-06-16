@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { GENERATIONS, TYPE_CLASSES } from '@/lib/constants';
-import { playCompletionSound, fetchRandomPokemon, getDateStr, copyToClipboard } from '@/lib/utils';
+import { playCompletionSound, fetchRandomPokemon, getDateStr, copyToClipboard, playPokemonCry } from '@/lib/utils';
 import { checkAchievements } from '@/lib/achievements';
 import { getRarity } from '@/lib/rarity';
 import { playSoundEffect, getSoundSettings } from '@/lib/soundEffects';
@@ -14,6 +14,8 @@ const PokemonGrid = dynamic(() => import('@/components/PokemonGrid'), { ssr: fal
 const FriendCollection = dynamic(() => import('@/components/FriendCollection'), { ssr: false });
 const Footer = dynamic(() => import('@/components/Footer'), { ssr: false });
 const AchievementBadge = dynamic(() => import('@/components/AchievementBadge'), { ssr: false });
+const Background = dynamic(() => import('@/components/Background'), { ssr: false });
+const Confetti = dynamic(() => import('@/components/Confetti'), { ssr: false });
 
 const CIRCUMFERENCE = 2 * Math.PI * 104;
 
@@ -48,6 +50,7 @@ const T = {
     notifTitle:      'Pokémon Pomodoro!',
     notifBody:       name => `Session complete! You caught ${name} 🎉`,
     friendTitle:     "Rival's Collection",
+    zenTitle:        'Zen mode',
   },
   es: {
     title:           ['Pokémon', 'Pomodoro'],
@@ -79,6 +82,7 @@ const T = {
     notifTitle:      '¡Pokémon Pomodoro!',
     notifBody:       name => `¡Sesión completada! Capturaste a ${name} 🎉`,
     friendTitle:     'Colección de tu rival',
+    zenTitle:        'Modo zen',
   },
 };
 
@@ -96,6 +100,7 @@ export default function Home() {
   const [showCustom, setShowCustom] = useState(false);
   const [customVal, setCustomVal]   = useState('');
   const [mode, setMode]             = useState('all');
+  const [zenMode, setZenMode]       = useState(false);
 
   const [collection, setCollection]             = useState([]);
   const [sessions, setSessions]                 = useState([]);
@@ -133,7 +138,6 @@ export default function Home() {
     if (saved === 'en' || saved === 'es') {
       setLang(saved);
     } else {
-      // Auto-detect browser language
       if (typeof navigator !== 'undefined') {
         const browserLang = navigator.language || navigator.userLanguage;
         const detectedLang = browserLang.startsWith('es') ? 'es' : 'en';
@@ -148,7 +152,6 @@ export default function Home() {
     if (saved === 'light' || saved === 'dark') {
       setTheme(saved);
     } else {
-      // Auto-detect system preference
       if (typeof window !== 'undefined') {
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         const detected = prefersDark ? 'dark' : 'light';
@@ -182,6 +185,26 @@ export default function Home() {
     }
   }, []);
 
+  // Drive the dynamic ambient background via timer state
+  const timerState = statusKey === 'done'
+    ? 'done'
+    : running && remaining <= 60
+      ? 'warning'
+      : running
+        ? 'focusing'
+        : 'idle';
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('data-timer', timerState);
+    }
+  }, [timerState]);
+
+  // Leaving running state exits zen mode automatically
+  useEffect(() => {
+    if (!running && zenMode && statusKey !== 'paused') setZenMode(false);
+  }, [running, zenMode, statusKey]);
+
   const stats = useMemo(() => {
     const totalSessions = sessions.length;
     const totalSeconds  = sessions.reduce((a, s) => a + (s.duration || 0), 0);
@@ -201,6 +224,12 @@ export default function Home() {
 
   const stopTimer = useCallback(() => { clearInterval(intervalRef.current); intervalRef.current = null; }, []);
 
+  const trackEvent = useCallback((eventName, eventParams = {}) => {
+    if (typeof window !== 'undefined' && window.gtag) {
+      window.gtag('event', eventName, eventParams);
+    }
+  }, []);
+
   const handleComplete = useCallback(async () => {
     setRunning(false);
     setStatusKey('done');
@@ -214,9 +243,8 @@ export default function Home() {
 
     let pokemon;
     try { pokemon = await fetchRandomPokemon(GENERATIONS[modeRef.current]?.range || [1, 898]); }
-    catch (_) { pokemon = { id: 25, name: 'Pikachu', sprite: '', types: ['electric'] }; }
+    catch (_) { pokemon = { id: 25, name: 'Pikachu', sprite: '', types: ['electric'], cry: '' }; }
 
-    // Add rarity to pokemon
     const rarity = getRarity(pokemon.id);
     pokemon = { ...pokemon, rarity };
 
@@ -231,12 +259,12 @@ export default function Home() {
         setCaptured(pokemon);
         setModalPhase('reveal');
         playSoundEffect('pokemon-catch', soundsEnabled);
+        playPokemonCry(pokemon.cry, soundsEnabled);
 
         setCollection(prev => {
           const e = { ...pokemon, goal: currentGoal, date: getDateStr(), session: Date.now(), achievements: [] };
           const next = [e, ...prev];
 
-          // Check for new achievements
           const stats = { totalSessions: sessions.length + 1, timeStr: '0m', streak: 0, uniquePokemon: new Set(next.map(p => p.id)).size };
           const newAchievements = checkAchievements(stats, next, sessions);
           setAchievements(newAchievements);
@@ -250,13 +278,7 @@ export default function Home() {
         });
       }, 450);
     }, 2200);
-  }, [currentGoal, lang, sessions, soundsEnabled]);
-
-  const trackEvent = useCallback((eventName, eventParams = {}) => {
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', eventName, eventParams);
-    }
-  }, []);
+  }, [currentGoal, lang, sessions, soundsEnabled, totalSec, trackEvent]);
 
   const startPause = useCallback(() => {
     if (running) {
@@ -282,7 +304,7 @@ export default function Home() {
   }, [remaining, running, handleComplete]);
 
   const reset = useCallback(() => {
-    stopTimer(); setRunning(false); setRemaining(totalSec); setStatusKey('ready');
+    stopTimer(); setRunning(false); setRemaining(totalSec); setStatusKey('ready'); setZenMode(false);
   }, [stopTimer, totalSec]);
 
   const setDuration = min => {
@@ -352,11 +374,15 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <div className="app">
-        <div className="langBar">
-          <button className={`langBtn${lang === 'en' ? ' langBtnActive' : ''}`} onClick={() => { setLang('en'); localStorage.setItem('poke-lang','en'); }}>EN</button>
-          <span className="langSep">|</span>
-          <button className={`langBtn${lang === 'es' ? ' langBtnActive' : ''}`} onClick={() => { setLang('es'); localStorage.setItem('poke-lang','es'); }}>ES</button>
+      <Background />
+
+      <div className={`app${zenMode ? ' zen' : ''}`}>
+        <div className="topBar">
+          <div className="langBar">
+            <button className={`langBtn${lang === 'en' ? ' langBtnActive' : ''}`} onClick={() => { setLang('en'); localStorage.setItem('poke-lang','en'); }}>EN</button>
+            <span className="langSep">|</span>
+            <button className={`langBtn${lang === 'es' ? ' langBtnActive' : ''}`} onClick={() => { setLang('es'); localStorage.setItem('poke-lang','es'); }}>ES</button>
+          </div>
           <div className="themeBar">
             <button className={`themeBtn${theme === 'light' ? ' themeBtnActive' : ''}`} onClick={() => setTheme('light')} title="Light mode">☀️</button>
             <span className="themeSep">|</span>
@@ -373,112 +399,128 @@ export default function Home() {
           >
             {soundsEnabled ? '🔊' : '🔇'}
           </button>
+          <button
+            className={`zenToggle${zenMode ? ' active' : ''}`}
+            onClick={() => setZenMode(z => !z)}
+            title={t.zenTitle}
+          >
+            🧘
+          </button>
         </div>
 
-        <header className="appHeader">
-          <div className="headerPokeball">
-            <div className="hpbTop" /><div className="hpbBand"><div className="hpbBtn" /></div><div className="hpbBottom" />
-          </div>
-          <h1 className="appTitle">{t.title[0]}<br /><span>{t.title[1]}</span></h1>
-          <div className="headerPokeball">
-            <div className="hpbTop" /><div className="hpbBand"><div className="hpbBtn" /></div><div className="hpbBottom" />
-          </div>
-        </header>
+        <div className="dashboard">
+          <div className="leftPanel">
+            <header className="appHeader">
+              <div className="headerPokeball">
+                <div className="hpbTop" /><div className="hpbBand"><div className="hpbBtn" /></div><div className="hpbBottom" />
+              </div>
+              <h1 className="appTitle">{t.title[0]}<br /><span>{t.title[1]}</span></h1>
+              <div className="headerPokeball">
+                <div className="hpbTop" /><div className="hpbBand"><div className="hpbBtn" /></div><div className="hpbBottom" />
+              </div>
+            </header>
 
-        <div className="statsBar">
-          <div className="statItem"><span className="statValue">{stats.totalSessions}</span><span className="statLabel">{t.stats[0]}</span></div>
-          <div className="statDivider" />
-          <div className="statItem"><span className="statValue">{stats.timeStr}</span><span className="statLabel">{t.stats[1]}</span></div>
-          <div className="statDivider" />
-          <div className="statItem"><span className="statValue">{stats.streak}{stats.streak > 0 ? ' 🔥' : ''}</span><span className="statLabel">{t.stats[2]}</span></div>
-          <div className="statDivider" />
-          <div className="statItem"><span className="statValue">{stats.uniquePokemon}</span><span className="statLabel">{t.stats[3]}</span></div>
+            <div className="statsBar glass">
+              <div className="statItem"><span className="statValue">{stats.totalSessions}</span><span className="statLabel">{t.stats[0]}</span></div>
+              <div className="statDivider" />
+              <div className="statItem"><span className="statValue">{stats.timeStr}</span><span className="statLabel">{t.stats[1]}</span></div>
+              <div className="statDivider" />
+              <div className="statItem"><span className="statValue">{stats.streak}{stats.streak > 0 ? ' 🔥' : ''}</span><span className="statLabel">{t.stats[2]}</span></div>
+              <div className="statDivider" />
+              <div className="statItem"><span className="statValue">{stats.uniquePokemon}</span><span className="statLabel">{t.stats[3]}</span></div>
+            </div>
+
+            {achievements.length > 0 && (
+              <div className="achievementsBar glass">
+                {achievements.map(achId => (
+                  <AchievementBadge key={achId} achievementId={achId} size="small" />
+                ))}
+              </div>
+            )}
+
+            <main className="mainCard glass">
+              <div className="goalWrapper">
+                <label className="goalLabel" htmlFor="goal-input">{t.goalLabel}</label>
+                <input id="goal-input" className="goalInput" type="text"
+                  placeholder={t.goalPlaceholder} maxLength={80}
+                  value={goal} onChange={e => setGoal(e.target.value)} autoComplete="off" />
+              </div>
+
+              <div className="timerWrapper">
+                <div className="timerGlow" />
+                <svg className="timerSvg" viewBox="0 0 240 240">
+                  <circle className="timerTrack" cx="120" cy="120" r="104" />
+                  <circle className={`timerRing ${ringClass}`} cx="120" cy="120" r="104"
+                    transform="rotate(-90 120 120)" style={{ strokeDashoffset: ringOffset }} />
+                </svg>
+                <div className="timerFace">
+                  <div className="timerTime">{fmt(remaining)}</div>
+                  <div className="timerStatus">{statusLabel}</div>
+                </div>
+              </div>
+
+              <div className="durationRow">
+                {durations.map(d => (
+                  <button key={d} className={`durBtn${activeDur === d ? ' durBtnActive' : ''}`}
+                    onClick={() => setDuration(d)} disabled={running}>{d} min</button>
+                ))}
+                <button className={`durBtn${activeDur === 'custom' ? ' durBtnActive' : ''}`}
+                  onClick={() => setShowCustom(v => !v)} disabled={running}>Custom</button>
+              </div>
+
+              {showCustom && (
+                <div className="customRow">
+                  <input className="customInput" type="number" min={1} max={180}
+                    placeholder={t.customPlaceholder} value={customVal}
+                    onChange={e => setCustomVal(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && applyCustom()} autoFocus />
+                  <button className="durBtn durBtnActive" onClick={applyCustom}>OK</button>
+                </div>
+              )}
+
+              <div className="modeWrapper">
+                <span className="modeLabel">{t.generationLabel}</span>
+                <div className="modeRow">
+                  {Object.entries(GENERATIONS).map(([key]) => (
+                    <button key={key} className={`modeBtn${mode === key ? ' modeBtnActive' : ''}`}
+                      onClick={() => setMode(key)} disabled={running}>{t.genLabels[key]}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="controlsRow">
+                <button className="ctrlBtn ctrlBtnSecondary" onClick={reset}>{t.btnReset}</button>
+                <button className="ctrlBtn ctrlBtnPrimary" onClick={startPause}>
+                  {running ? t.btnPause : statusKey === 'paused' ? t.btnContinue : t.btnStart}
+                </button>
+              </div>
+            </main>
+          </div>
+
+          <div className="rightPanel">
+            <section className="collectionSection collectionPanel glass">
+              <div className="collectionHeader">
+                <div className="collectionTitleGroup">
+                  <h2 className="collectionTitle">{t.pokedexTitle}</h2>
+                  <span className="collectionBadge">{collection.length}</span>
+                </div>
+                <div className="collectionActions">
+                  <button className="actionBtn" onClick={exportCollection}>{t.btnExport}</button>
+                  <button className="actionBtn" onClick={() => importRef.current?.click()}>{t.btnImport}</button>
+                  <button className={`actionBtn${copied ? ' actionBtnSuccess' : ''}`} onClick={shareCollection}>
+                    {copied ? t.btnCopied : t.btnShare}
+                  </button>
+                  <input type="file" ref={importRef} accept=".json" onChange={handleImport} style={{ display: 'none' }} />
+                </div>
+              </div>
+              <div className="collectionScroll">
+                <PokemonGrid collection={collection} lang={lang} t={t} />
+              </div>
+            </section>
+
+            <FriendCollection friendCollection={friendCollection} t={t} />
+          </div>
         </div>
-
-        {achievements.length > 0 && (
-          <div className="achievementsBar">
-            {achievements.map(achId => (
-              <AchievementBadge key={achId} achievementId={achId} size="small" />
-            ))}
-          </div>
-        )}
-
-        <main className="mainCard">
-          <div className="goalWrapper">
-            <label className="goalLabel" htmlFor="goal-input">{t.goalLabel}</label>
-            <input id="goal-input" className="goalInput" type="text"
-              placeholder={t.goalPlaceholder} maxLength={80}
-              value={goal} onChange={e => setGoal(e.target.value)} autoComplete="off" />
-          </div>
-
-          <div className="timerWrapper">
-            <svg className="timerSvg" viewBox="0 0 240 240">
-              <circle className="timerTrack" cx="120" cy="120" r="104" />
-              <circle className={`timerRing ${ringClass}`} cx="120" cy="120" r="104"
-                transform="rotate(-90 120 120)" style={{ strokeDashoffset: ringOffset }} />
-            </svg>
-            <div className="timerFace">
-              <div className="timerTime">{fmt(remaining)}</div>
-              <div className="timerStatus">{statusLabel}</div>
-            </div>
-          </div>
-
-          <div className="durationRow">
-            {durations.map(d => (
-              <button key={d} className={`durBtn${activeDur === d ? ' durBtnActive' : ''}`}
-                onClick={() => setDuration(d)} disabled={running}>{d} min</button>
-            ))}
-            <button className={`durBtn${activeDur === 'custom' ? ' durBtnActive' : ''}`}
-              onClick={() => setShowCustom(v => !v)} disabled={running}>Custom</button>
-          </div>
-
-          {showCustom && (
-            <div className="customRow">
-              <input className="customInput" type="number" min={1} max={180}
-                placeholder={t.customPlaceholder} value={customVal}
-                onChange={e => setCustomVal(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && applyCustom()} autoFocus />
-              <button className="durBtn durBtnActive" onClick={applyCustom}>OK</button>
-            </div>
-          )}
-
-          <div className="modeWrapper">
-            <span className="modeLabel">{t.generationLabel}</span>
-            <div className="modeRow">
-              {Object.entries(GENERATIONS).map(([key]) => (
-                <button key={key} className={`modeBtn${mode === key ? ' modeBtnActive' : ''}`}
-                  onClick={() => setMode(key)} disabled={running}>{t.genLabels[key]}</button>
-              ))}
-            </div>
-          </div>
-
-          <div className="controlsRow">
-            <button className="ctrlBtn ctrlBtnSecondary" onClick={reset}>{t.btnReset}</button>
-            <button className="ctrlBtn ctrlBtnPrimary" onClick={startPause}>
-              {running ? t.btnPause : statusKey === 'paused' ? t.btnContinue : t.btnStart}
-            </button>
-          </div>
-        </main>
-
-        <section className="collectionSection">
-          <div className="collectionHeader">
-            <div className="collectionTitleGroup">
-              <h2 className="collectionTitle">{t.pokedexTitle}</h2>
-              <span className="collectionBadge">{collection.length}</span>
-            </div>
-            <div className="collectionActions">
-              <button className="actionBtn" onClick={exportCollection}>{t.btnExport}</button>
-              <button className="actionBtn" onClick={() => importRef.current?.click()}>{t.btnImport}</button>
-              <button className={`actionBtn${copied ? ' actionBtnSuccess' : ''}`} onClick={shareCollection}>
-                {copied ? t.btnCopied : t.btnShare}
-              </button>
-              <input type="file" ref={importRef} accept=".json" onChange={handleImport} style={{ display: 'none' }} />
-            </div>
-          </div>
-          <PokemonGrid collection={collection} lang={lang} t={t} />
-        </section>
-
-        <FriendCollection friendCollection={friendCollection} t={t} />
 
         <CaptureModal
           showModal={showModal}
@@ -488,6 +530,7 @@ export default function Home() {
           t={t}
           closeModal={closeModal}
         />
+        {showModal && modalPhase === 'reveal' && <Confetti />}
 
         <Footer />
         <CookieConsent />
