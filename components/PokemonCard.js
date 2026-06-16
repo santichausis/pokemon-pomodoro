@@ -1,19 +1,17 @@
-import { useRef } from 'react';
-import { motion, useMotionValue, useSpring, useTransform } from 'motion/react';
-import { TYPE_CLASSES } from '@/lib/constants';
+import { motion } from 'motion/react';
 import { getRarity } from '@/lib/rarity';
 
-// Duotone gradient per primary type for the sprite panel
-const TYPE_PANEL_COLORS = {
-  normal:   ['#B5B59C', '#8C8C72'], fire:     ['#FF8A50', '#E0521F'],
-  water:    ['#56A0E6', '#2E6FBE'], grass:    ['#67C267', '#3C8C3C'],
-  electric: ['#E6BE2E', '#C99410'], psychic:  ['#F06699', '#D43F73'],
-  ice:      ['#5AC8E6', '#2E9FC9'], fighting: ['#D45656', '#A53030'],
-  poison:   ['#B25AD4', '#8C36B0'], ground:   ['#D49150', '#B06E28'],
-  flying:   ['#74A8E0', '#4A80C2'], bug:      ['#9CB23C', '#6E8C28'],
-  rock:     ['#A89C66', '#7C7048'], ghost:    ['#6E6EB0', '#48487C'],
-  dragon:   ['#6A6AE6', '#4040C2'], dark:     ['#6E6E78', '#48484E'],
-  steel:    ['#94B2C9', '#6A8CA8'], fairy:    ['#F088CC', '#D45AB0'],
+// One vivid color per type — used to build the full-card gradient
+const TYPE_COLOR = {
+  normal:   '#9A9A82', fire:     '#F2651F',
+  water:    '#3A8FE0', grass:    '#46B552',
+  electric: '#E6B800', psychic:  '#EE4F8B',
+  ice:      '#54C0DB', fighting: '#CF3F3F',
+  poison:   '#9B3FC4', ground:   '#CF9248',
+  flying:   '#6F9EE0', bug:      '#8AA61F',
+  rock:     '#A89856', ghost:    '#5E5499',
+  dragon:   '#5A52E0', dark:     '#55505C',
+  steel:    '#6F93A8', fairy:    '#EE7AC9',
 };
 
 const TYPE_ICONS = {
@@ -24,106 +22,68 @@ const TYPE_ICONS = {
   steel: '⚙️', fairy: '✨',
 };
 
-const RARITY_CLASS = {
-  'common':     'pokemonCard',
-  'uncommon':   'pokemonCard pokemonCardRare',
-  'ultra-rare': 'pokemonCard pokemonCardUltraRare',
-  'legendary':  'pokemonCard pokemonCardLegendary',
-};
-
-const prefersReducedMotion = () =>
-  typeof window !== 'undefined' &&
-  window.matchMedia &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Darken a hex color toward black by a 0..1 amount
+function shade(hex, amount) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = Math.round(((n >> 16) & 255) * (1 - amount));
+  const g = Math.round(((n >> 8) & 255) * (1 - amount));
+  const b = Math.round((n & 255) * (1 - amount));
+  return `rgb(${r}, ${g}, ${b})`;
+}
 
 export default function PokemonCard({ pokemon: p, index = 0 }) {
   const rarity = getRarity(p.id);
-  const primaryType = p.types[0]?.toLowerCase();
-  const [c1, c2] = TYPE_PANEL_COLORS[primaryType] || ['#9E9E9E', '#757575'];
-  const hasHolo = rarity.tier !== 'common';
+  const tier = rarity.tier; // common | uncommon | ultra-rare | legendary
+  const num = String(p.id).padStart(3, '0');
 
-  const ref = useRef(null);
+  const types = p.types.map(tp => tp.toLowerCase());
+  const c1 = TYPE_COLOR[types[0]] || '#9E9E9E';
+  const c2 = types[1] ? (TYPE_COLOR[types[1]] || shade(c1, 0.35)) : shade(c1, 0.4);
+  const gradient = `linear-gradient(125deg, ${c1} 0%, ${c2} 100%)`;
 
-  // Pointer position 0..1 across the card
-  const px = useMotionValue(0.5);
-  const py = useMotionValue(0.5);
-
-  // 3D tilt (spring-smoothed)
-  const rotateY = useSpring(useTransform(px, [0, 1], [-10, 10]), { stiffness: 220, damping: 18 });
-  const rotateX = useSpring(useTransform(py, [0, 1], [8, -8]), { stiffness: 220, damping: 18 });
-
-  // Glare + holo follow the pointer via CSS variables
-  const mxPct = useTransform(px, v => `${v * 100}%`);
-  const myPct = useTransform(py, v => `${v * 100}%`);
-
-  function handleMove(e) {
-    if (prefersReducedMotion() || !ref.current) return;
-    const r = ref.current.getBoundingClientRect();
-    px.set((e.clientX - r.left) / r.width);
-    py.set((e.clientY - r.top) / r.height);
-  }
-  function handleLeave() {
-    px.set(0.5);
-    py.set(0.5);
-  }
+  const rarityLabel = tier === 'legendary' ? 'Legendary' : tier === 'ultra-rare' ? 'Ultra Rare' : null;
+  const rarityClass = tier === 'legendary' ? 'pcRarity--legendary' : 'pcRarity--ultrarare';
 
   return (
     <motion.div
-      ref={ref}
-      className={`${RARITY_CLASS[rarity.tier] || 'pokemonCard'} pcard`}
-      layout
-      initial={{ opacity: 0, y: 14, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.32, delay: Math.min(index * 0.025, 0.4), ease: [0.2, 0.8, 0.3, 1] }}
-      onMouseMove={handleMove}
-      onMouseLeave={handleLeave}
-      style={{
-        rotateX,
-        rotateY,
-        transformPerspective: 900,
-        ['--mx']: mxPct,
-        ['--my']: myPct,
-      }}
+      className={`pcCard pcCard--${tier}`}
+      style={{ background: gradient }}
+      initial={{ opacity: 0, y: 18 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, delay: Math.min(index * 0.04, 0.5), ease: [0.2, 0.8, 0.3, 1] }}
+      whileHover={{ y: -4, scale: 1.015, transition: { type: 'spring', stiffness: 300, damping: 26 } }}
     >
-      {/* Holographic foil (rare+) */}
-      {hasHolo && <div className="pcardHolo" />}
-      {/* Pointer-tracked glare */}
-      <div className="pcardGlare" />
+      <span className="pcWatermark">{num}</span>
+      <div className="pcPokeball" />
+      {tier === 'legendary' && <div className="pcShimmer" />}
 
-      {/* ── Left: info ── */}
-      <div className="pokemonCardInfo">
-        <span className="pokemonCardNumber">Nº{String(p.id).padStart(3, '0')}</span>
-        <span className="pokemonCardName">{p.name}</span>
-        <div className="pokemonCardTypes">
-          {p.types.map(type => (
-            <span key={type} className={`typePill ${TYPE_CLASSES[type] || ''}`}>
-              <span className="typePillIcon">{TYPE_ICONS[type?.toLowerCase()] || '●'}</span>
-              {type}
-            </span>
-          ))}
-        </div>
-        {(p.goal || p.date) && (
-          <div className="pokemonCardMeta">
-            {p.goal && <span className="pokemonCardGoal" title={p.goal}>{p.goal}</span>}
-            <span className="pokemonCardDate">{p.date}</span>
+      <div className="pcContent">
+        <div className="pcInfo">
+          <span className="pcNumber">N°{num}</span>
+          <h3 className="pcName">{p.name}</h3>
+          <div className="pcTypes">
+            {p.types.map(type => (
+              <span key={type} className="pcType">
+                <span className="pcTypeIcon">{TYPE_ICONS[type?.toLowerCase()] || '●'}</span>
+                {type}
+              </span>
+            ))}
           </div>
-        )}
+          {(p.goal || p.date) && (
+            <div className="pcMeta">
+              {p.goal && <span className="pcGoal" title={p.goal}>{p.goal}</span>}
+              {p.date && <span className="pcDate">{p.date}</span>}
+            </div>
+          )}
+        </div>
+
+        <div className="pcArt">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img className="pcSprite" src={p.sprite} alt={p.name} loading="lazy" />
+        </div>
       </div>
 
-      {/* ── Right: sprite panel ── */}
-      <div
-        className="pokemonCardSpritePanel"
-        style={{ background: `radial-gradient(circle at 50% 30%, ${c1}, ${c2})` }}
-      >
-        <span className="pokemonCardWatermark">{String(p.id).padStart(3, '0')}</span>
-        <div className="pokemonCardPokeballMark" />
-        <div className="pokemonCardPanelGlow" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img className="pokemonCardSprite" src={p.sprite} alt={p.name} loading="lazy" />
-        <span className={`rarityPip rarityPip${rarity.tier.charAt(0).toUpperCase() + rarity.tier.slice(1).replace('-', '')}`}>
-          {rarity.tier === 'legendary' ? '★' : rarity.tier === 'ultra-rare' ? '◆' : rarity.tier === 'uncommon' ? '●' : ''}
-        </span>
-      </div>
+      {rarityLabel && <span className={`pcRarity ${rarityClass}`}>{rarityLabel}</span>}
     </motion.div>
   );
 }

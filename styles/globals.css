@@ -635,8 +635,8 @@ body {
    ===================== */
 .pokemonGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(248px, 1fr));
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 14px;
 }
 
 .pokemonCard {
@@ -762,97 +762,238 @@ body {
   50%      { box-shadow: 0 4px 32px rgba(255,215,0,0.55); }
 }
 
-/* ── Cutting-edge TCG card: 3D tilt + glare + holo foil ── */
-.pcard {
-  transform-style: preserve-3d;
+/* ─────────────────────────────────────────
+   Full-color type card (redesign)
+   ───────────────────────────────────────── */
+.pcCard {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  min-height: 158px;
+  border-radius: 22px;
+  overflow: hidden;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  isolation: isolate;
   will-change: transform;
 }
+.pcCard:hover { box-shadow: 0 22px 48px rgba(0, 0, 0, 0.30); }
 
-/* Pointer-tracked glare highlight */
-.pcardGlare {
+/* dark scrim over the type gradient for text legibility (text side) */
+.pcCard::before {
+  content: '';
   position: absolute;
   inset: 0;
-  border-radius: 16px;
-  pointer-events: none;
-  z-index: 4;
-  background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
-    rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 42%);
-  mix-blend-mode: soft-light;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-.pcard:hover .pcardGlare { opacity: 1; }
-
-/* Holographic foil overlay (rare and above) */
-.pcardHolo {
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  pointer-events: none;
-  z-index: 3;
-  background: linear-gradient(115deg,
-    transparent 16%,
-    rgba(255, 0, 153, 0.45) 28%,
-    rgba(255, 221, 0, 0.45) 40%,
-    rgba(0, 221, 170, 0.45) 52%,
-    rgba(0, 153, 255, 0.45) 64%,
-    rgba(170, 0, 255, 0.45) 76%,
-    transparent 88%);
-  background-size: 220% 220%;
-  background-position: var(--mx, 50%) var(--my, 50%);
-  mix-blend-mode: overlay;
-  opacity: 0.16;
-  transition: opacity 0.3s ease;
-}
-.pcard:hover .pcardHolo { opacity: 0.4; }
-.pokemonCardUltraRare .pcardHolo { opacity: 0.28; }
-.pokemonCardUltraRare:hover .pcardHolo { opacity: 0.6; }
-.pokemonCardLegendary .pcardHolo {
-  opacity: 0.4;
-  background-size: 260% 260%;
-  animation: holoShift 6s linear infinite;
-}
-.pokemonCardLegendary:hover .pcardHolo { opacity: 0.72; }
-@keyframes holoShift {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* Giant dex-number watermark + pokéball silhouette inside the sprite panel */
-.pokemonCardWatermark {
-  position: absolute;
-  right: -4px;
-  bottom: -16px;
   z-index: 0;
+  background: linear-gradient(100deg, rgba(0, 0, 0, 0.48) 0%, rgba(0, 0, 0, 0.18) 44%, rgba(0, 0, 0, 0) 70%);
+  pointer-events: none;
+}
+
+/* hover sheen sweep (transform-only, 60fps) */
+.pcCard::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: linear-gradient(115deg, transparent 36%, rgba(255, 255, 255, 0.28) 50%, transparent 64%);
+  transform: translateX(-130%);
+  transition: transform 0.75s cubic-bezier(0.2, 0.8, 0.3, 1);
+  pointer-events: none;
+}
+.pcCard:hover::after { transform: translateX(130%); }
+
+/* watermarks behind the sprite */
+.pcWatermark {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
   font-family: 'Press Start 2P', monospace;
-  font-size: 52px;
+  font-size: 84px;
   line-height: 1;
-  letter-spacing: -3px;
-  color: rgba(255, 255, 255, 0.16);
+  letter-spacing: -4px;
+  color: rgba(255, 255, 255, 0.12);
   pointer-events: none;
   user-select: none;
 }
-.pokemonCardPokeballMark {
+.pcPokeball {
   position: absolute;
-  width: 150px;
-  height: 150px;
-  left: -38px;
-  top: -38px;
+  width: 200px;
+  height: 200px;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
   border-radius: 50%;
-  border: 11px solid rgba(255, 255, 255, 0.12);
-  z-index: 0;
+  border: 15px solid rgba(255, 255, 255, 0.10);
+  z-index: 1;
   pointer-events: none;
 }
-.pokemonCardPokeballMark::after {
+.pcPokeball::after {
   content: '';
   position: absolute;
   inset: 0;
   margin: auto;
-  width: 36px;
-  height: 36px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
-  border: 9px solid rgba(255, 255, 255, 0.12);
+  border: 13px solid rgba(255, 255, 255, 0.10);
+}
+
+/* legendary continuous shimmer */
+.pcShimmer {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.22) 50%, transparent 60%);
+  background-size: 250% 100%;
+  animation: pcShimmer 4s ease-in-out infinite;
+}
+@keyframes pcShimmer {
+  0%        { background-position: 140% 0; }
+  60%, 100% { background-position: -140% 0; }
+}
+
+/* content */
+.pcContent {
+  position: relative;
+  z-index: 2;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  gap: 12px;
+  min-width: 0;
+}
+.pcInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+.pcNumber {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.72);
+}
+.pcName {
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.30);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pcTypes { display: flex; gap: 7px; flex-wrap: wrap; }
+.pcType {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 13px 5px 6px;
+  border-radius: 20px;
+  color: #fff;
+  text-transform: capitalize;
+  background: rgba(255, 255, 255, 0.20);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.pcTypeIcon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.26);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+.pcMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 1px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.80);
+}
+.pcGoal {
+  font-style: italic;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+.pcDate { font-weight: 700; opacity: 0.85; }
+
+/* art / sprite */
+.pcArt {
+  position: relative;
+  width: 154px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  animation: pcFloat 4s ease-in-out infinite;
+}
+.pcSprite {
+  width: 154px;
+  height: 154px;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 14px rgba(0, 0, 0, 0.38));
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.pcCard:hover .pcSprite { transform: scale(1.09) rotate(-2deg); }
+@keyframes pcFloat {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-7px); }
+}
+
+/* rarity badge */
+.pcRarity {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 4;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.pcRarity--ultrarare { background: rgba(255, 255, 255, 0.92); color: #C2185B; border-color: #fff; }
+.pcRarity--legendary { background: rgba(255, 215, 0, 0.92); color: #5A4500; border-color: #FFE79A; }
+.pcCard--legendary { box-shadow: 0 10px 36px rgba(255, 200, 0, 0.40); }
+.pcCard--legendary:hover { box-shadow: 0 22px 52px rgba(255, 200, 0, 0.52); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pcArt, .pcShimmer { animation: none; }
+  .pcCard::after { transition: none; }
+}
+
+@media (max-width: 520px) {
+  .pcCard { min-height: 134px; }
+  .pcArt, .pcSprite { width: 116px; }
+  .pcSprite { height: 116px; }
+  .pcName { font-size: 22px; }
+  .pcWatermark { font-size: 60px; }
+  .pcPokeball { width: 150px; height: 150px; }
+  .pcContent { padding: 14px 16px; }
+  .pcGoal { max-width: 120px; }
 }
 
 /* Type pill badges */
