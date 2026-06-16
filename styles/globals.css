@@ -762,6 +762,99 @@ body {
   50%      { box-shadow: 0 4px 32px rgba(255,215,0,0.55); }
 }
 
+/* ── Cutting-edge TCG card: 3D tilt + glare + holo foil ── */
+.pcard {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+/* Pointer-tracked glare highlight */
+.pcardGlare {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  pointer-events: none;
+  z-index: 4;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0) 42%);
+  mix-blend-mode: soft-light;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.pcard:hover .pcardGlare { opacity: 1; }
+
+/* Holographic foil overlay (rare and above) */
+.pcardHolo {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  pointer-events: none;
+  z-index: 3;
+  background: linear-gradient(115deg,
+    transparent 16%,
+    rgba(255, 0, 153, 0.45) 28%,
+    rgba(255, 221, 0, 0.45) 40%,
+    rgba(0, 221, 170, 0.45) 52%,
+    rgba(0, 153, 255, 0.45) 64%,
+    rgba(170, 0, 255, 0.45) 76%,
+    transparent 88%);
+  background-size: 220% 220%;
+  background-position: var(--mx, 50%) var(--my, 50%);
+  mix-blend-mode: overlay;
+  opacity: 0.16;
+  transition: opacity 0.3s ease;
+}
+.pcard:hover .pcardHolo { opacity: 0.4; }
+.pokemonCardUltraRare .pcardHolo { opacity: 0.28; }
+.pokemonCardUltraRare:hover .pcardHolo { opacity: 0.6; }
+.pokemonCardLegendary .pcardHolo {
+  opacity: 0.4;
+  background-size: 260% 260%;
+  animation: holoShift 6s linear infinite;
+}
+.pokemonCardLegendary:hover .pcardHolo { opacity: 0.72; }
+@keyframes holoShift {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Giant dex-number watermark + pokéball silhouette inside the sprite panel */
+.pokemonCardWatermark {
+  position: absolute;
+  right: -4px;
+  bottom: -16px;
+  z-index: 0;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 52px;
+  line-height: 1;
+  letter-spacing: -3px;
+  color: rgba(255, 255, 255, 0.16);
+  pointer-events: none;
+  user-select: none;
+}
+.pokemonCardPokeballMark {
+  position: absolute;
+  width: 150px;
+  height: 150px;
+  left: -38px;
+  top: -38px;
+  border-radius: 50%;
+  border: 11px solid rgba(255, 255, 255, 0.12);
+  z-index: 0;
+  pointer-events: none;
+}
+.pokemonCardPokeballMark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 9px solid rgba(255, 255, 255, 0.12);
+}
+
 /* Type pill badges */
 .typePill {
   display: inline-flex;
