@@ -50,7 +50,8 @@ const T = {
     notifTitle:      'Pokémon Pomodoro!',
     notifBody:       name => `Session complete! You caught ${name} 🎉`,
     friendTitle:     "Rival's Collection",
-    zenTitle:        'Zen mode',
+    zenTitle:        'Focus mode',
+    zenHint:         'Press Esc to exit focus mode',
   },
   es: {
     title:           ['Pokémon', 'Pomodoro'],
@@ -82,13 +83,16 @@ const T = {
     notifTitle:      '¡Pokémon Pomodoro!',
     notifBody:       name => `¡Sesión completada! Capturaste a ${name} 🎉`,
     friendTitle:     'Colección de tu rival',
-    zenTitle:        'Modo zen',
+    zenTitle:        'Modo foco',
+    zenHint:         'Tocá Esc para salir del modo foco',
   },
 };
 
 export default function Home() {
   const [lang, setLang]             = useState('en');
-  const [theme, setTheme]           = useState('light');
+  const [themeMode, setThemeMode]   = useState('auto'); // auto | light | dark
+  const [systemTheme, setSystemTheme] = useState('light');
+  const theme = themeMode === 'auto' ? systemTheme : themeMode;
   const t = T[lang];
 
   const [totalSec, setTotalSec]     = useState(25 * 60);
@@ -147,26 +151,33 @@ export default function Home() {
     }
   }, []);
 
+  // Load the saved theme preference (defaults to "auto" = follow the OS)
   useEffect(() => {
-    const saved = localStorage.getItem('poke-theme');
-    if (saved === 'light' || saved === 'dark') {
-      setTheme(saved);
-    } else {
-      if (typeof window !== 'undefined') {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const detected = prefersDark ? 'dark' : 'light';
-        setTheme(detected);
-        localStorage.setItem('poke-theme', detected);
-      }
-    }
+    const saved = localStorage.getItem('poke-theme-mode');
+    if (saved === 'auto' || saved === 'light' || saved === 'dark') setThemeMode(saved);
   }, []);
 
+  // Track the OS color scheme live (so "auto" follows system changes in real time)
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const apply = () => setSystemTheme(mq.matches ? 'dark' : 'light');
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
+
+  // Apply the resolved theme to the document
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('poke-theme', theme);
     }
   }, [theme]);
+
+  const chooseTheme = mode => {
+    setThemeMode(mode);
+    if (typeof localStorage !== 'undefined') localStorage.setItem('poke-theme-mode', mode);
+  };
 
   useEffect(() => {
     const c = localStorage.getItem('poke-collection');
@@ -200,10 +211,19 @@ export default function Home() {
     }
   }, [timerState]);
 
-  // Leaving running state exits zen mode automatically
+  // Focus (zen) mode only makes sense during an active session
+  const sessionActive = running || statusKey === 'paused';
   useEffect(() => {
-    if (!running && zenMode && statusKey !== 'paused') setZenMode(false);
-  }, [running, zenMode, statusKey]);
+    if (!sessionActive && zenMode) setZenMode(false);
+  }, [sessionActive, zenMode]);
+
+  // Allow exiting zen mode with the Escape key
+  useEffect(() => {
+    if (!zenMode) return;
+    const onKey = e => { if (e.key === 'Escape') setZenMode(false); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [zenMode]);
 
   const stats = useMemo(() => {
     const totalSessions = sessions.length;
@@ -371,7 +391,11 @@ export default function Home() {
         <title>Pokémon Pomodoro</title>
         <meta name="description" content="Pokémon-themed Pomodoro timer" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
+        <meta name="theme-color" content="#EE1515" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+        <link rel="alternate icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </Head>
 
       <Background />
@@ -384,9 +408,9 @@ export default function Home() {
             <button className={`langBtn${lang === 'es' ? ' langBtnActive' : ''}`} onClick={() => { setLang('es'); localStorage.setItem('poke-lang','es'); }}>ES</button>
           </div>
           <div className="themeBar">
-            <button className={`themeBtn${theme === 'light' ? ' themeBtnActive' : ''}`} onClick={() => setTheme('light')} title="Light mode">☀️</button>
-            <span className="themeSep">|</span>
-            <button className={`themeBtn${theme === 'dark' ? ' themeBtnActive' : ''}`} onClick={() => setTheme('dark')} title="Dark mode">🌙</button>
+            <button className={`themeBtn${themeMode === 'light' ? ' themeBtnActive' : ''}`} onClick={() => chooseTheme('light')} title="Light mode">☀️</button>
+            <button className={`themeBtn${themeMode === 'dark' ? ' themeBtnActive' : ''}`} onClick={() => chooseTheme('dark')} title="Dark mode">🌙</button>
+            <button className={`themeBtn${themeMode === 'auto' ? ' themeBtnActive' : ''}`} onClick={() => chooseTheme('auto')} title="Auto (system)">🖥️</button>
           </div>
           <button
             className={`soundToggle${soundsEnabled ? ' enabled' : ''}`}
@@ -399,13 +423,15 @@ export default function Home() {
           >
             {soundsEnabled ? '🔊' : '🔇'}
           </button>
-          <button
-            className={`zenToggle${zenMode ? ' active' : ''}`}
-            onClick={() => setZenMode(z => !z)}
-            title={t.zenTitle}
-          >
-            🧘
-          </button>
+          {sessionActive && (
+            <button
+              className={`zenToggle${zenMode ? ' active' : ''}`}
+              onClick={() => setZenMode(z => !z)}
+              title={t.zenTitle}
+            >
+              🧘
+            </button>
+          )}
         </div>
 
         <div className="dashboard">
@@ -531,6 +557,7 @@ export default function Home() {
           closeModal={closeModal}
         />
         {showModal && modalPhase === 'reveal' && <Confetti />}
+        {zenMode && <div className="zenHint">{t.zenHint}</div>}
 
         <Footer />
         <CookieConsent />

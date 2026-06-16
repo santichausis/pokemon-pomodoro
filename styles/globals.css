@@ -1344,7 +1344,7 @@ body {
 /* =====================
    Focus / Zen mode
    ===================== */
-.app.zen .topBar,
+/* Dim distractions while focusing — the top bar stays interactive so you can exit */
 .app.zen .appHeader,
 .app.zen .statsBar,
 .app.zen .achievementsBar,
@@ -1353,15 +1353,38 @@ body {
 .app.zen .durationRow,
 .app.zen .modeWrapper,
 .app.zen .appFooter {
-  opacity: 0.12;
-  filter: blur(1px);
-  transition: opacity 0.5s, filter 0.5s;
+  opacity: 0.16;
+  filter: blur(1.5px);
+  transition: opacity 0.5s ease, filter 0.5s ease;
   pointer-events: none;
 }
+.app.zen .topBar { transition: opacity 0.5s ease; }
+.app.zen .langBar, .app.zen .soundToggle { opacity: 0.4; }
 .app.zen .dashboard { grid-template-columns: 1fr; place-items: center; }
 .app.zen .leftPanel { max-width: 560px; width: 100%; }
-.app.zen .timerWrapper { transform: scale(1.12); }
-.app.zen .mainCard { background: transparent; box-shadow: none; border-color: transparent; }
+.app.zen .timerWrapper { transform: scale(1.15); transition: transform 0.5s ease; }
+.app.zen .mainCard { background: transparent; box-shadow: none; border-color: transparent; backdrop-filter: none; }
+.app.zen .controlsRow { max-width: 360px; margin: 0 auto; }
+
+.zenHint {
+  position: fixed;
+  bottom: 26px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+  color: var(--muted);
+  background: rgba(var(--card-rgb), 0.72);
+  border: 1px solid var(--glass-border);
+  padding: 8px 16px;
+  border-radius: 20px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+  animation: cookieIn 0.4s ease;
+}
 
 /* =====================
    Focus & Accessibility
