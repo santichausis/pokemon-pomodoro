@@ -6,7 +6,7 @@ export default function CookieConsent() {
 
   useEffect(() => {
     const consent = localStorage.getItem('poke-analytics-consent');
-    const savedLanguage = localStorage.getItem('poke-language') || 'en';
+    const savedLanguage = localStorage.getItem('poke-lang') || 'en';
     setLanguage(savedLanguage);
 
     if (!consent) {

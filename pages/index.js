@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { GENERATIONS, TYPE_CLASSES } from '@/lib/constants';
-import { playCompletionSound, fetchRandomPokemon, getDateStr, copyToClipboard, playPokemonCry } from '@/lib/utils';
+import { playCompletionSound, fetchRandomPokemon, getDateStr, copyToClipboard, playPokemonCry, encodeShare, decodeShare, readStored } from '@/lib/utils';
 import { checkAchievements } from '@/lib/achievements';
 import { getRarity } from '@/lib/rarity';
 import { playSoundEffect, getSoundSettings } from '@/lib/soundEffects';
@@ -120,10 +120,13 @@ export default function Home() {
   const [soundsEnabled, setSoundsEnabled] = useState(true);
 
   const intervalRef   = useRef(null);
+  const deadlineRef   = useRef(null);
   const totalSecRef   = useRef(totalSec);
+  const remainingRef  = useRef(remaining);
   const modeRef       = useRef(mode);
   const importRef     = useRef(null);
   totalSecRef.current = totalSec;
+  remainingRef.current = remaining;
   modeRef.current     = mode;
 
   // Load sound settings on mount
@@ -174,23 +177,30 @@ export default function Home() {
     }
   }, [theme]);
 
+  // Keep <html lang> in sync with the active language
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.setAttribute('lang', lang);
+    }
+  }, [lang]);
+
   const chooseTheme = mode => {
     setThemeMode(mode);
     if (typeof localStorage !== 'undefined') localStorage.setItem('poke-theme-mode', mode);
   };
 
   useEffect(() => {
-    const c = localStorage.getItem('poke-collection');
-    if (c) setCollection(JSON.parse(c));
-    const s = localStorage.getItem('poke-sessions');
-    if (s) setSessions(JSON.parse(s));
+    const c = readStored('poke-collection');
+    if (Array.isArray(c)) setCollection(c);
+    const s = readStored('poke-sessions');
+    if (Array.isArray(s)) setSessions(s);
   }, []);
 
   useEffect(() => {
     const hash = window.location.hash;
     if (hash.startsWith('#share=')) {
       try {
-        const data = JSON.parse(atob(decodeURIComponent(hash.slice(7))));
+        const data = decodeShare(decodeURIComponent(hash.slice(7)));
         setFriendCollection(data.collection || []);
       } catch (_) {}
     }
@@ -310,12 +320,14 @@ export default function Home() {
       setCurrentGoal(goal || 'No goal set');
       setRunning(true); setStatusKey('focusing');
       trackEvent('timer_start', { duration_min: totalSec / 60 });
+      // Drive the countdown from an absolute deadline so it stays accurate even
+      // when the tab is backgrounded (setInterval gets throttled there).
+      deadlineRef.current = Date.now() + remainingRef.current * 1000;
       intervalRef.current = setInterval(() => {
-        setRemaining(prev => {
-          if (prev <= 1) { clearInterval(intervalRef.current); intervalRef.current = null; return 0; }
-          return prev - 1;
-        });
-      }, 1000);
+        const rem = Math.max(0, Math.round((deadlineRef.current - Date.now()) / 1000));
+        setRemaining(rem);
+        if (rem <= 0) { clearInterval(intervalRef.current); intervalRef.current = null; }
+      }, 250);
     }
   }, [running, goal, stopTimer, totalSec, trackEvent]);
 
@@ -373,7 +385,7 @@ export default function Home() {
   }
 
   async function shareCollection() {
-    const encoded = encodeURIComponent(btoa(JSON.stringify({ collection })));
+    const encoded = encodeURIComponent(encodeShare({ collection }));
     const url = `${window.location.origin}${window.location.pathname}#share=${encoded}`;
     try {
       await copyToClipboard(url);
@@ -403,14 +415,14 @@ export default function Home() {
       <div className={`app${zenMode ? ' zen' : ''}`}>
         <div className="topBar">
           <div className="langBar">
-            <button className={`langBtn${lang === 'en' ? ' langBtnActive' : ''}`} onClick={() => { setLang('en'); localStorage.setItem('poke-lang','en'); }}>EN</button>
+            <button className={`langBtn${lang === 'en' ? ' langBtnActive' : ''}`} aria-label="English" aria-pressed={lang === 'en'} onClick={() => { setLang('en'); localStorage.setItem('poke-lang','en'); }}>EN</button>
             <span className="langSep">|</span>
-            <button className={`langBtn${lang === 'es' ? ' langBtnActive' : ''}`} onClick={() => { setLang('es'); localStorage.setItem('poke-lang','es'); }}>ES</button>
+            <button className={`langBtn${lang === 'es' ? ' langBtnActive' : ''}`} aria-label="Español" aria-pressed={lang === 'es'} onClick={() => { setLang('es'); localStorage.setItem('poke-lang','es'); }}>ES</button>
           </div>
           <div className="themeBar">
-            <button className={`themeBtn${themeMode === 'light' ? ' themeBtnActive' : ''}`} onClick={() => chooseTheme('light')} title="Light mode">☀️</button>
-            <button className={`themeBtn${themeMode === 'dark' ? ' themeBtnActive' : ''}`} onClick={() => chooseTheme('dark')} title="Dark mode">🌙</button>
-            <button className={`themeBtn${themeMode === 'auto' ? ' themeBtnActive' : ''}`} onClick={() => chooseTheme('auto')} title="Auto (system)">🖥️</button>
+            <button className={`themeBtn${themeMode === 'light' ? ' themeBtnActive' : ''}`} onClick={() => chooseTheme('light')} title="Light mode" aria-label="Light mode" aria-pressed={themeMode === 'light'}>☀️</button>
+            <button className={`themeBtn${themeMode === 'dark' ? ' themeBtnActive' : ''}`} onClick={() => chooseTheme('dark')} title="Dark mode" aria-label="Dark mode" aria-pressed={themeMode === 'dark'}>🌙</button>
+            <button className={`themeBtn${themeMode === 'auto' ? ' themeBtnActive' : ''}`} onClick={() => chooseTheme('auto')} title="Auto (system)" aria-label="Auto theme (system)" aria-pressed={themeMode === 'auto'}>🖥️</button>
           </div>
           <button
             className={`soundToggle${soundsEnabled ? ' enabled' : ''}`}
@@ -420,6 +432,8 @@ export default function Home() {
               playSoundEffect('achievement', !soundsEnabled);
             }}
             title={soundsEnabled ? 'Sounds on' : 'Sounds off'}
+            aria-label={soundsEnabled ? 'Sounds on' : 'Sounds off'}
+            aria-pressed={soundsEnabled}
           >
             {soundsEnabled ? '🔊' : '🔇'}
           </button>
@@ -428,6 +442,8 @@ export default function Home() {
               className={`zenToggle${zenMode ? ' active' : ''}`}
               onClick={() => setZenMode(z => !z)}
               title={t.zenTitle}
+              aria-label={t.zenTitle}
+              aria-pressed={zenMode}
             >
               🧘
             </button>
@@ -472,16 +488,16 @@ export default function Home() {
                   value={goal} onChange={e => setGoal(e.target.value)} autoComplete="off" />
               </div>
 
-              <div className="timerWrapper">
-                <div className="timerGlow" />
-                <svg className="timerSvg" viewBox="0 0 240 240">
+              <div className="timerWrapper" role="timer" aria-label={`${fmt(remaining)} — ${statusLabel}`}>
+                <div className="timerGlow" aria-hidden="true" />
+                <svg className="timerSvg" viewBox="0 0 240 240" aria-hidden="true">
                   <circle className="timerTrack" cx="120" cy="120" r="104" />
                   <circle className={`timerRing ${ringClass}`} cx="120" cy="120" r="104"
                     transform="rotate(-90 120 120)" style={{ strokeDashoffset: ringOffset }} />
                 </svg>
                 <div className="timerFace">
                   <div className="timerTime">{fmt(remaining)}</div>
-                  <div className="timerStatus">{statusLabel}</div>
+                  <div className="timerStatus" aria-live="polite">{statusLabel}</div>
                 </div>
               </div>
 

@@ -1387,6 +1387,36 @@ body {
 }
 
 /* =====================
+   Error Boundary fallback
+   ===================== */
+.errorFallback {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  padding: 40px 24px;
+  color: var(--text, #1A1A2E);
+}
+.errorFallback h1 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 16px;
+  color: var(--dark, #003A70);
+  line-height: 1.6;
+}
+.errorFallback p { color: var(--muted, #6B7280); font-weight: 600; max-width: 360px; }
+.errorFallback .ctrlBtn { flex: 0 0 auto; min-width: 160px; }
+.errorPokeball {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  border: 3px solid var(--border, #E2E8F0);
+  overflow: hidden;
+  animation: float 5s ease-in-out infinite;
+}
+
+/* =====================
    Focus & Accessibility
    ===================== */
 button:focus-visible,

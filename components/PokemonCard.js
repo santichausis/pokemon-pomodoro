@@ -49,8 +49,9 @@ export default function PokemonCard({ pokemon: p, index = 0 }) {
       className={`pcCard pcCard--${tier}`}
       style={{ background: gradient }}
       initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: Math.min(index * 0.04, 0.5), ease: [0.2, 0.8, 0.3, 1] }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '0px 0px -40px 0px' }}
+      transition={{ duration: 0.4, delay: (index % 8) * 0.04, ease: [0.2, 0.8, 0.3, 1] }}
       whileHover={{ y: -4, scale: 1.015, transition: { type: 'spring', stiffness: 300, damping: 26 } }}
     >
       <span className="pcWatermark">{num}</span>
@@ -79,7 +80,7 @@ export default function PokemonCard({ pokemon: p, index = 0 }) {
 
         <div className="pcArt">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="pcSprite" src={p.sprite} alt={p.name} loading="lazy" />
+          <img className="pcSprite" src={p.sprite} alt={p.name} width={154} height={154} loading="lazy" decoding="async" />
         </div>
       </div>
 
