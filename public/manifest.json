@@ -1,0 +1,15 @@
+{
+  "name": "Pokémon Pomodoro",
+  "short_name": "Pomodoro",
+  "description": "A Pokémon-themed Pomodoro timer. Complete focus sessions, catch surprise Pokémon, and build your Pokédex.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#EEF2FB",
+  "theme_color": "#EE1515",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    { "src": "/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any maskable" }
+  ]
+}

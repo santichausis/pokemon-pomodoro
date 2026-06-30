@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import PokemonCard from '@/components/PokemonCard';
 
-export default function PokemonGrid({ collection, lang, t }) {
+export default function PokemonGrid({ collection, t }) {
   if (collection.length === 0) {
     return (
       <div className="pokemonGrid">

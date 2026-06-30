@@ -1,5 +1,7 @@
 # Pokémon Pomodoro
 
+![Pokémon Pomodoro](public/og-image.png)
+
 A Pokémon-themed Pomodoro timer that gamifies productivity. Complete focus sessions, catch surprise Pokémon, and build your personal Pokédex. Track stats, share collections, and compete with friends.
 
 ## How it works
@@ -12,25 +14,28 @@ A Pokémon-themed Pomodoro timer that gamifies productivity. Complete focus sess
 
 ## Features
 
-- **Timer**: Animated circular timer with SVG ring, visual states (red → yellow → green)
-- **Pokémon Catching**: Shaking Pokéball animation + reveal, 898 possible Pokémon via [PokéAPI](https://pokeapi.co/)
+- **Timer**: Animated circular timer with SVG ring, visual states (red → yellow → green) and a glowing focus mode
+- **Pokémon Catching**: Shaking Pokéball animation + reveal, 898 possible Pokémon via [PokéAPI](https://pokeapi.co/), with the Pokémon's official cry playing on capture
 - **Generation Filter**: Restrict captures to Gen I through Gen VIII
-- **Pokédex**: Sorted by Pokémon ID, includes capture goal and date
+- **Pokédex**: Full-color cards by type, rarity badges (Common → Legendary), capture goal and date
 - **Personal Stats**: Sessions completed, total focus time, day streak, unique Pokémon caught
+- **Focus Mode**: Dims distractions and enlarges the timer during an active session (exit anytime with Esc)
 - **Notifications**: Browser notifications when timer ends (with permission)
 - **Sharing**: Share your Pokédex via URL to compare collections with friends
 - **Import/Export**: Backup your collection as JSON
 - **Language Support**: EN / ES toggle with auto-detection based on browser locale
-- **Dark Mode**: Light/dark theme toggle with system preference detection
+- **Theming**: Light / Dark / Auto (follows the OS color scheme live)
+- **Installable**: PWA with manifest + icons — add it to your home screen
 - **Analytics**: Optional Google Analytics (GA4) with cookie consent
-- **Sounds**: Completion sound via Web Audio API
+- **Sounds**: Synthesized completion/achievement sounds via the Web Audio API
 - **Persistent Storage**: Collection saved to `localStorage`
 
 ## Stack
 
-- [Next.js 16](https://nextjs.org/) — Pages Router
+- [Next.js 16](https://nextjs.org/) — Pages Router, Turbopack
 - React 19
-- Plain CSS (no UI framework)
+- [Motion](https://motion.dev/) (Framer Motion) for animations
+- Plain CSS (no UI framework) with CSS variables for theming
 - PokéAPI (no API key required, free)
 
 ## Getting started
@@ -59,7 +64,11 @@ Open [http://localhost:3000](http://localhost:3000).
 - ✅ Share your Pokédex via URL for rival comparisons
 - ✅ Export / import JSON backup
 - ✅ Bilingual support (EN/ES) with auto-detection
-- ✅ Dark Mode with theme toggle and system preference detection
+- ✅ Light / Dark / Auto theme that follows the OS live
+- ✅ Focus mode for distraction-free sessions
+- ✅ Achievements system with unlockable badges
+- ✅ Installable PWA (manifest + icons)
+- ✅ Open Graph / Twitter card previews for sharing
 - ✅ Google Analytics integration with cookie consent
 - ✅ Code splitting and lazy loading for performance
 

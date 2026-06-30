@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
+import { T } from '@/lib/i18n';
 
-export default function CookieConsent() {
+// `??` (not `||`) so an explicit empty string can intentionally disable GA.
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? 'G-08Q8TZKBRM';
+
+export default function CookieConsent({ lang = 'en' }) {
   const [showConsent, setShowConsent] = useState(false);
-  const [language, setLanguage] = useState('en');
 
   useEffect(() => {
     const consent = localStorage.getItem('poke-analytics-consent');
-    const savedLanguage = localStorage.getItem('poke-lang') || 'en';
-    setLanguage(savedLanguage);
-
     if (!consent) {
       setShowConsent(true);
     } else if (consent === 'accepted') {
@@ -27,50 +27,33 @@ export default function CookieConsent() {
     setShowConsent(false);
   };
 
-  const translations = {
-    en: {
-      text: 'We use analytics to understand how you use our app and improve it. No personal data is collected.',
-      reject: 'Reject',
-      accept: 'Accept Analytics'
-    },
-    es: {
-      text: 'Usamos análisis para entender cómo usas nuestra app y mejorarla. No se recopilan datos personales.',
-      reject: 'Rechazar',
-      accept: 'Aceptar Análisis'
-    }
-  };
+  const t = T[lang] || T.en;
 
-  const t = translations[language] || translations.en;
+  if (!showConsent) return null;
 
   return (
-    <>
-      {showConsent && (
-        <div className="cookieConsent">
-          <div className="cookieContent">
-            <p className="cookieText">
-              {t.text}
-            </p>
-            <div className="cookieButtons">
-              <button className="cookieBtn cookieBtnReject" onClick={rejectCookies}>
-                {t.reject}
-              </button>
-              <button className="cookieBtn cookieBtnAccept" onClick={acceptCookies}>
-                {t.accept}
-              </button>
-            </div>
-          </div>
+    <div className="cookieConsent" role="dialog" aria-label="Cookie consent">
+      <div className="cookieContent">
+        <p className="cookieText">{t.cookieText}</p>
+        <div className="cookieButtons">
+          <button className="cookieBtn cookieBtnReject" onClick={rejectCookies}>
+            {t.cookieReject}
+          </button>
+          <button className="cookieBtn cookieBtnAccept" onClick={acceptCookies}>
+            {t.cookieAccept}
+          </button>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 }
 
 function initializeGA() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || !GA_ID) return;
 
   const script = document.createElement('script');
   script.async = true;
-  script.src = 'https://www.googletagmanager.com/gtag/js?id=G-08Q8TZKBRM';
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
   document.head.appendChild(script);
 
   window.dataLayer = window.dataLayer || [];
@@ -78,7 +61,7 @@ function initializeGA() {
     window.dataLayer.push(arguments);
   }
   gtag('js', new Date());
-  gtag('config', 'G-08Q8TZKBRM', {
+  gtag('config', GA_ID, {
     page_path: window.location.pathname,
   });
 
