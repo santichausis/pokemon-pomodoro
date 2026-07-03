@@ -24,7 +24,7 @@ A Pokémon-themed Pomodoro timer that gamifies productivity. Complete focus sess
 - **Sharing**: Share your Pokédex via URL to compare collections with friends
 - **Import/Export**: Backup your collection as JSON
 - **Language Support**: EN / ES toggle with auto-detection based on browser locale
-- **Theming**: Light / Dark / Auto (follows the OS color scheme live)
+- **Theming**: Light / Dark toggle, defaults to your OS preference on first visit
 - **Installable**: PWA with manifest + icons — add it to your home screen
 - **Analytics**: Optional Google Analytics (GA4) with cookie consent
 - **Sounds**: Synthesized completion/achievement sounds via the Web Audio API
@@ -64,7 +64,7 @@ Open [http://localhost:3000](http://localhost:3000).
 - ✅ Share your Pokédex via URL for rival comparisons
 - ✅ Export / import JSON backup
 - ✅ Bilingual support (EN/ES) with auto-detection
-- ✅ Light / Dark / Auto theme that follows the OS live
+- ✅ Light / Dark theme, defaults to your OS preference
 - ✅ Focus mode for distraction-free sessions
 - ✅ Achievements system with unlockable badges
 - ✅ Installable PWA (manifest + icons)

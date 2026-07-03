@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { getRarity } from '@/lib/rarity';
+import { getRarity, translateRarity } from '@/lib/rarity';
 import { translateType } from '@/lib/constants';
 import { isTrustedSpriteUrl } from '@/lib/utils';
 
@@ -43,7 +43,7 @@ export default function PokemonCard({ pokemon: p, index = 0, lang = 'en', onDele
   const c2 = types[1] ? (TYPE_COLOR[types[1]] || shade(c1, 0.35)) : shade(c1, 0.4);
   const gradient = `linear-gradient(125deg, ${c1} 0%, ${c2} 100%)`;
 
-  const rarityLabel = tier === 'legendary' ? 'Legendary' : tier === 'ultra-rare' ? 'Ultra Rare' : null;
+  const rarityLabel = tier === 'legendary' || tier === 'ultra-rare' ? translateRarity(tier, lang) : null;
   const rarityClass = tier === 'legendary' ? 'pcRarity--legendary' : 'pcRarity--ultrarare';
 
   return (

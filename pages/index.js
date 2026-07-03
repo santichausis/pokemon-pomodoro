@@ -410,7 +410,6 @@ export default function Home() {
           <div className="themeBar">
             <button className={`themeBtn${themeMode === 'light' ? ' themeBtnActive' : ''}`} onClick={() => chooseTheme('light')} title="Light mode" aria-label="Light mode" aria-pressed={themeMode === 'light'}>☀️</button>
             <button className={`themeBtn${themeMode === 'dark' ? ' themeBtnActive' : ''}`} onClick={() => chooseTheme('dark')} title="Dark mode" aria-label="Dark mode" aria-pressed={themeMode === 'dark'}>🌙</button>
-            <button className={`themeBtn${themeMode === 'auto' ? ' themeBtnActive' : ''}`} onClick={() => chooseTheme('auto')} title="Auto (system)" aria-label="Auto theme (system)" aria-pressed={themeMode === 'auto'}>🖥️</button>
           </div>
           <button
             className={`soundToggle${soundsEnabled ? ' enabled' : ''}`}

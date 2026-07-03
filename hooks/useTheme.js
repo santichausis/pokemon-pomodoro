@@ -1,26 +1,21 @@
 import { useState, useEffect, useCallback } from 'react';
 
-// Resolves the active theme from a "mode" (auto | light | dark).
-// "auto" follows the OS color scheme live.
+// Light/dark only. On first visit (no saved preference yet) the OS
+// preference is used as the initial value; from then on it's a plain
+// choice that only changes when the user explicitly toggles it — it does
+// not keep following the OS live.
 export function useTheme() {
-  const [themeMode, setThemeMode] = useState('auto');
-  const [systemTheme, setSystemTheme] = useState('light');
-  const theme = themeMode === 'auto' ? systemTheme : themeMode;
+  const [theme, setTheme] = useState('light');
 
-  // Load saved preference
+  // Load saved preference, or fall back to the OS preference once on mount.
   useEffect(() => {
     const saved = typeof localStorage !== 'undefined' && localStorage.getItem('poke-theme-mode');
-    if (saved === 'auto' || saved === 'light' || saved === 'dark') setThemeMode(saved);
-  }, []);
-
-  // Track the OS color scheme in real time
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const apply = () => setSystemTheme(mq.matches ? 'dark' : 'light');
-    apply();
-    mq.addEventListener('change', apply);
-    return () => mq.removeEventListener('change', apply);
+    if (saved === 'light' || saved === 'dark') {
+      setTheme(saved);
+    } else if (typeof window !== 'undefined' && window.matchMedia) {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      setTheme(prefersDark ? 'dark' : 'light');
+    }
   }, []);
 
   // Reflect the resolved theme on the document
@@ -31,9 +26,10 @@ export function useTheme() {
   }, [theme]);
 
   const chooseTheme = useCallback(mode => {
-    setThemeMode(mode);
+    if (mode !== 'light' && mode !== 'dark') return;
+    setTheme(mode);
     if (typeof localStorage !== 'undefined') localStorage.setItem('poke-theme-mode', mode);
   }, []);
 
-  return { theme, themeMode, chooseTheme };
+  return { theme, themeMode: theme, chooseTheme };
 }
