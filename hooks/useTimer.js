@@ -67,6 +67,15 @@ export function useTimer({ initialMinutes = 25, onComplete } = {}) {
   // Clean up on unmount
   useEffect(() => () => stop(), [stop]);
 
+  // Warn before closing/navigating away while a focus session is running,
+  // so progress isn't lost by an accidental tab close.
+  useEffect(() => {
+    if (!running) return;
+    const handler = e => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [running]);
+
   const timerState =
     statusKey === 'done' ? 'done'
     : running && remaining <= 60 ? 'warning'

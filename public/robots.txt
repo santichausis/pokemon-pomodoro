@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://pokemon-pomodoro.vercel.app/sitemap.xml

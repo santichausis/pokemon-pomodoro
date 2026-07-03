@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
 import { getRarity } from '@/lib/rarity';
 import { translateType } from '@/lib/constants';
+import { isTrustedSpriteUrl } from '@/lib/utils';
 
 // One vivid color per type — used to build the full-card gradient
 const TYPE_COLOR = {
@@ -32,7 +33,7 @@ function shade(hex, amount) {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-export default function PokemonCard({ pokemon: p, index = 0, lang = 'en' }) {
+export default function PokemonCard({ pokemon: p, index = 0, lang = 'en', onDelete, deleteLabel = 'Remove' }) {
   const rarity = getRarity(p.id);
   const tier = rarity.tier; // common | uncommon | ultra-rare | legendary
   const num = String(p.id).padStart(3, '0');
@@ -47,7 +48,7 @@ export default function PokemonCard({ pokemon: p, index = 0, lang = 'en' }) {
 
   return (
     <motion.div
-      className={`pcCard pcCard--${tier}`}
+      className={`pcCard pcCard--${tier}${onDelete ? ' pcCard--deletable' : ''}`}
       style={{ background: gradient }}
       initial={{ opacity: 0, y: 18 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -58,6 +59,12 @@ export default function PokemonCard({ pokemon: p, index = 0, lang = 'en' }) {
       <span className="pcWatermark">{num}</span>
       <div className="pcPokeball" />
       {tier === 'legendary' && <div className="pcShimmer" />}
+      {onDelete && (
+        <button type="button" className="pcDelete" aria-label={deleteLabel} title={deleteLabel}
+          onClick={e => { e.stopPropagation(); onDelete(); }}>
+          ×
+        </button>
+      )}
 
       <div className="pcContent">
         <div className="pcInfo">
@@ -80,8 +87,10 @@ export default function PokemonCard({ pokemon: p, index = 0, lang = 'en' }) {
         </div>
 
         <div className="pcArt">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img className="pcSprite" src={p.sprite} alt={p.name} width={154} height={154} loading="lazy" decoding="async" />
+          {isTrustedSpriteUrl(p.sprite) && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img className="pcSprite" src={p.sprite} alt={p.name} width={154} height={154} loading="lazy" decoding="async" />
+          )}
         </div>
       </div>
 

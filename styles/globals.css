@@ -48,7 +48,7 @@
 html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
 
 body {
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-nunito), sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -209,7 +209,7 @@ body {
 .langBtn {
   background: none;
   border: none;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-nunito), sans-serif;
   font-size: 11px;
   font-weight: 700;
   color: var(--muted);
@@ -263,6 +263,17 @@ body {
 .soundToggle.enabled { opacity: 1; }
 .zenToggle.active { opacity: 1; color: var(--red); }
 
+.notifDenied {
+  display: inline-flex;
+  align-items: center;
+  font-size: 13px;
+  opacity: 0.6;
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid var(--border);
+  cursor: help;
+}
+
 /* =====================
    Header
    ===================== */
@@ -274,7 +285,7 @@ body {
   padding: 6px 8px;
 }
 .appTitle {
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-press-start), monospace;
   font-size: clamp(14px, 2vw, 20px);
   line-height: 1.7;
   text-align: center;
@@ -282,6 +293,16 @@ body {
   letter-spacing: -0.5px;
 }
 .appTitle span { color: var(--red); }
+
+.appTagline {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  max-width: 420px;
+  margin: 2px auto 0;
+  line-height: 1.5;
+}
 
 .headerPokeball {
   width: 46px; height: 46px;
@@ -364,7 +385,7 @@ body {
   padding: 13px 16px;
   border: 2px solid var(--border);
   border-radius: 14px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-nunito), sans-serif;
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
@@ -435,7 +456,7 @@ body {
   z-index: 1;
 }
 .timerTime {
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-press-start), monospace;
   font-size: clamp(30px, 4.6vw, 44px);
   color: var(--dark);
   letter-spacing: -2px;
@@ -456,7 +477,7 @@ body {
   border: 2px solid var(--border);
   border-radius: 22px;
   background: transparent;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-nunito), sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: var(--muted);
@@ -473,7 +494,7 @@ body {
   padding: 9px 12px;
   border: 2px solid var(--border);
   border-radius: 14px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-nunito), sans-serif;
   font-size: 14px;
   font-weight: 700;
   outline: none;
@@ -500,7 +521,7 @@ body {
   border: 2px solid var(--border);
   border-radius: 18px;
   background: transparent;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-nunito), sans-serif;
   font-size: 12px;
   font-weight: 700;
   color: var(--muted);
@@ -518,7 +539,7 @@ body {
   padding: 15px;
   border: none;
   border-radius: 14px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-nunito), sans-serif;
   font-size: 16px;
   font-weight: 800;
   cursor: pointer;
@@ -571,7 +592,7 @@ body {
   gap: 10px;
 }
 .collectionTitleGroup { display: flex; align-items: center; gap: 10px; }
-.collectionTitle   { font-family: 'Press Start 2P', monospace; font-size: 12px; color: var(--dark); }
+.collectionTitle   { font-family: var(--font-press-start), monospace; font-size: 12px; color: var(--dark); }
 .collectionBadge   {
   background: var(--red); color: #fff;
   font-size: 12px; font-weight: 800;
@@ -584,7 +605,7 @@ body {
   border: 1.5px solid var(--border);
   border-radius: 12px;
   background: rgba(var(--card-rgb), 0.6);
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-nunito), sans-serif;
   font-size: 12px;
   font-weight: 700;
   color: var(--text);
@@ -593,6 +614,50 @@ body {
 }
 .actionBtn:hover      { border-color: var(--text); transform: translateY(-1px); }
 .actionBtnSuccess     { background: #22c55e !important; border-color: #22c55e !important; color: #fff !important; }
+
+.importMessage {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--dark);
+  background: rgba(var(--bg-rgb), 0.7);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  animation: cookieIn 0.3s ease;
+}
+
+.pokedexFilters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pokedexSearch {
+  flex: 1;
+  min-width: 140px;
+  padding: 8px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: rgba(var(--bg-rgb), 0.6);
+  color: var(--text);
+  font-family: var(--font-nunito), sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.pokedexSearch:focus { border-color: var(--red); }
+.pokedexSearch::placeholder { color: var(--muted); opacity: 0.7; }
+.pokedexTypeSelect {
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: rgba(var(--bg-rgb), 0.6);
+  color: var(--text);
+  font-family: var(--font-nunito), sans-serif;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  max-width: 140px;
+}
 
 .collectionScroll {
   overflow-y: auto;
@@ -810,7 +875,7 @@ body {
   top: 50%;
   transform: translateY(-50%);
   z-index: 1;
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-press-start), monospace;
   font-size: 84px;
   line-height: 1;
   letter-spacing: -4px;
@@ -981,6 +1046,29 @@ body {
 .pcCard--legendary { box-shadow: 0 10px 36px rgba(255, 200, 0, 0.40); }
 .pcCard--legendary:hover { box-shadow: 0 22px 52px rgba(255, 200, 0, 0.52); }
 
+.pcDelete {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 5;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.30);
+  color: #fff;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+.pcDelete:hover, .pcDelete:focus-visible { opacity: 1; background: rgba(0, 0, 0, 0.55); transform: scale(1.08); }
+.pcCard--deletable .pcNumber { margin-left: 20px; }
+
 @media (prefers-reduced-motion: reduce) {
   .pcArt, .pcShimmer { animation: none; }
   .pcCard::after { transition: none; }
@@ -1069,11 +1157,23 @@ body {
   align-items: center;
   gap: 24px;
   box-shadow: 0 24px 70px rgba(0,0,0,0.5);
+  outline: none;
 }
 .modalHeader { text-align: center; }
 .modalStars  { color: var(--yellow); font-size: 16px; margin-bottom: 8px; letter-spacing: 4px; }
-.modalTitle  { font-family: 'Press Start 2P', monospace; font-size: 14px; color: var(--dark); line-height: 1.4; letter-spacing: 0.5px; margin-bottom: 10px; }
+.modalTitle  { font-family: var(--font-press-start), monospace; font-size: 14px; color: var(--dark); line-height: 1.4; letter-spacing: 0.5px; margin-bottom: 10px; }
 .modalGoal   { font-size: 12px; font-weight: 600; color: var(--muted); font-style: italic; }
+
+.captureError {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 8px 4px;
+}
+.captureErrorIcon { font-size: 40px; opacity: 0.8; }
+.captureErrorMsg { font-size: 13px; font-weight: 600; color: var(--muted); line-height: 1.5; }
 
 .captureStage { display: flex; align-items: center; justify-content: center; height: 140px; }
 .pokeballAnim {
@@ -1299,7 +1399,7 @@ body {
   padding: 10px 12px;
   border: none;
   border-radius: 10px;
-  font-family: 'Nunito', sans-serif;
+  font-family: var(--font-nunito), sans-serif;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -1402,7 +1502,7 @@ body {
   color: var(--text, #1A1A2E);
 }
 .errorFallback h1 {
-  font-family: 'Press Start 2P', monospace;
+  font-family: var(--font-press-start), monospace;
   font-size: 16px;
   color: var(--dark, #003A70);
   line-height: 1.6;

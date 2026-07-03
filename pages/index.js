@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
-import { GENERATIONS } from '@/lib/constants';
+import { GENERATIONS, translateType } from '@/lib/constants';
 import { playCompletionSound, fetchRandomPokemon, getDateStr, copyToClipboard, playPokemonCry, encodeShare, decodeShare, readStored } from '@/lib/utils';
+import { sanitizeCollection, sanitizeSessions } from '@/lib/sanitize';
 import { checkAchievements, checkTimeBasedAchievements, mergeAchievements } from '@/lib/achievements';
 import { getRarity } from '@/lib/rarity';
 import { playSoundEffect } from '@/lib/soundEffects';
@@ -47,6 +48,10 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [achievements, setAchievements] = usePersistentState('poke-achievements', []);
   const [soundsEnabled, setSoundsEnabled] = usePersistentState('poke-sounds-enabled', true);
+  const [importMessage, setImportMessage] = useState('');
+  const [notifPermission, setNotifPermission] = useState('default');
+  const [pokedexQuery, setPokedexQuery] = useState('');
+  const [pokedexTypeFilter, setPokedexTypeFilter] = useState('all');
 
   const modeRef         = useRef(mode);
   const importRef       = useRef(null);
@@ -72,15 +77,30 @@ export default function Home() {
 
     setShowModal(true); setModalPhase('shaking'); setCaptured(null);
 
-    let pokemon;
+    let pokemon = null;
     try { pokemon = await fetchRandomPokemon(GENERATIONS[modeRef.current]?.range || [1, 898]); }
-    catch (_) { pokemon = { id: 25, name: 'Pikachu', sprite: '', types: ['electric'], cry: '' }; }
+    catch (_) { pokemon = null; }
+
+    // Couldn't reach PokéAPI (offline, timeout, or an error response) — be
+    // honest about it instead of silently substituting a fake Pikachu catch.
+    // The focus session above is already saved either way.
+    if (!pokemon) {
+      setTimeout(() => setModalPhase('error'), 1200);
+      return;
+    }
 
     pokemon = { ...pokemon, rarity: getRarity(pokemon.id) };
 
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-      const tSnap = T[lang] || T.en;
-      new Notification(tSnap.notifTitle, { body: tSnap.notifBody(pokemon.name), icon: '/favicon.ico' });
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      if (Notification.permission === 'granted') {
+        const tSnap = T[lang] || T.en;
+        new Notification(tSnap.notifTitle, { body: tSnap.notifBody(pokemon.name), icon: '/favicon.ico' });
+      } else if (Notification.permission === 'default') {
+        // Ask right after the first successful catch, not when the timer
+        // starts — a much less disruptive moment to interrupt with a
+        // permission prompt.
+        Notification.requestPermission().then(setNotifPermission);
+      }
     }
 
     setTimeout(() => {
@@ -133,17 +153,27 @@ export default function Home() {
     }
   }, []);
 
+  // Reflect the current notification permission (so a denied state can show
+  // a visible hint instead of silently never notifying).
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      setNotifPermission(Notification.permission);
+    }
+  }, []);
+
   // Keep <html lang> in sync with the active language
   useEffect(() => {
     if (typeof document !== 'undefined') document.documentElement.setAttribute('lang', lang);
   }, [lang]);
 
-  // Hydrate persisted data
+  // Hydrate persisted data. Sanitized like the share/import paths — a
+  // previous app version, a partial write, or manual localStorage edits
+  // could otherwise load a malformed shape straight into rendering.
   useEffect(() => {
     const c = readStored('poke-collection');
-    if (Array.isArray(c)) setCollection(c);
+    if (Array.isArray(c)) setCollection(sanitizeCollection(c));
     const s = readStored('poke-sessions');
-    if (Array.isArray(s)) setSessions(s);
+    if (Array.isArray(s)) setSessions(sanitizeSessions(s));
   }, []);
 
   // Load a shared rival collection from the URL hash
@@ -152,7 +182,7 @@ export default function Home() {
     if (hash.startsWith('#share=')) {
       try {
         const data = decodeShare(decodeURIComponent(hash.slice(7)));
-        setFriendCollection(data.collection || []);
+        setFriendCollection(sanitizeCollection(data.collection));
       } catch (_) {}
     }
   }, []);
@@ -189,6 +219,25 @@ export default function Home() {
     return { totalSessions, timeStr, streak, uniquePokemon };
   }, [sessions, collection]);
 
+  // Types actually present in the collection, for the filter dropdown —
+  // only offer choices that would return results.
+  const availableTypes = useMemo(() => {
+    const types = new Set();
+    collection.forEach(p => p.types.forEach(tp => types.add(tp.toLowerCase())));
+    return [...types].sort();
+  }, [collection]);
+
+  const pokedexFiltered = pokedexQuery.trim() !== '' || pokedexTypeFilter !== 'all';
+  const filteredCollection = useMemo(() => {
+    if (!pokedexFiltered) return collection;
+    const q = pokedexQuery.trim().toLowerCase();
+    return collection.filter(p => {
+      const matchesQuery = !q || p.name.toLowerCase().includes(q);
+      const matchesType = pokedexTypeFilter === 'all' || p.types.some(tp => tp.toLowerCase() === pokedexTypeFilter);
+      return matchesQuery && matchesType;
+    });
+  }, [collection, pokedexQuery, pokedexTypeFilter, pokedexFiltered]);
+
   // Keep unlocked achievements in sync with real progress — runs on first
   // load (fixing already-unlocked achievements not showing until the next
   // catch), after import, and whenever stats/collection/sessions change.
@@ -209,9 +258,6 @@ export default function Home() {
 
   const onToggle = useCallback(() => {
     if (running) { pause(); return; }
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
     setCurrentGoal(goal || 'No goal set');
     trackEvent('timer_start', { duration_min: totalSec / 60 });
     start();
@@ -238,26 +284,63 @@ export default function Home() {
     a.click(); URL.revokeObjectURL(url);
   }
 
+  function flashImportMessage(msg) {
+    setImportMessage(msg);
+    setTimeout(() => setImportMessage(''), 3500);
+  }
+
   function handleImport(e) {
     const file = e.target.files[0]; if (!file) return;
     const reader = new FileReader();
     reader.onload = ev => {
-      try {
-        const data = JSON.parse(ev.target.result);
-        if (data.collection) {
-          setCollection(data.collection);
-          localStorage.setItem('poke-collection', JSON.stringify(data.collection));
-          trackEvent('import_collection', { pokemon_count: data.collection.length });
-        }
-        if (data.sessions) {
-          setSessions(data.sessions);
-          localStorage.setItem('poke-sessions', JSON.stringify(data.sessions));
-        }
-      } catch (_) {}
+      let data;
+      try { data = JSON.parse(ev.target.result); }
+      catch (_) { flashImportMessage(t.importInvalid); e.target.value = ''; return; }
+
+      // Only touch collection/sessions that were actually present in the file
+      // — a sessions-only (or collection-only) backup shouldn't silently wipe
+      // the other half of the user's data.
+      const hasCollection = Array.isArray(data.collection);
+      const hasSessions = Array.isArray(data.sessions);
+      if (!hasCollection && !hasSessions) {
+        flashImportMessage(t.importInvalid);
+        e.target.value = '';
+        return;
+      }
+      const importedCollection = hasCollection ? sanitizeCollection(data.collection) : null;
+      const importedSessions = hasSessions ? sanitizeSessions(data.sessions) : null;
+
+      const confirmed = window.confirm(t.importConfirm(importedCollection?.length ?? 0, collection.length));
+      if (!confirmed) {
+        flashImportMessage(t.importCancelled);
+        e.target.value = '';
+        return;
+      }
+
+      if (importedCollection) {
+        setCollection(importedCollection);
+        localStorage.setItem('poke-collection', JSON.stringify(importedCollection));
+      }
+      if (importedSessions) {
+        setSessions(importedSessions);
+        localStorage.setItem('poke-sessions', JSON.stringify(importedSessions));
+      }
+      trackEvent('import_collection', { pokemon_count: importedCollection?.length ?? 0 });
+      flashImportMessage(t.importSuccess(importedCollection?.length ?? 0));
+      e.target.value = '';
     };
+    reader.onerror = () => flashImportMessage(t.importInvalid);
     reader.readAsText(file);
-    e.target.value = '';
   }
+
+  const deletePokemonEntry = useCallback(entry => {
+    if (!window.confirm(t.deleteConfirm(entry.name))) return;
+    setCollection(prev => {
+      const next = prev.filter(p => p.session !== entry.session);
+      localStorage.setItem('poke-collection', JSON.stringify(next));
+      return next;
+    });
+  }, [t]);
 
   async function shareCollection() {
     const encoded = encodeURIComponent(encodeShare({ collection }));
@@ -267,11 +350,23 @@ export default function Home() {
       trackEvent('share_collection', { pokemon_count: collection.length });
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
-    } catch (_) {}
+    } catch (_) {
+      window.prompt(t.shareFallbackPrompt, url);
+    }
   }
 
   const durations = [25, 45, 60];
   const description = 'A Pokémon-themed Pomodoro timer. Complete focus sessions, catch surprise Pokémon, and build your Pokédex.';
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'Pokémon Pomodoro',
+    description,
+    url: SITE_URL,
+    applicationCategory: 'ProductivityApplication',
+    operatingSystem: 'Any (web browser)',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+  };
 
   return (
     <>
@@ -299,6 +394,8 @@ export default function Home() {
         <meta name="twitter:title" content="Pokémon Pomodoro" />
         <meta name="twitter:description" content={description} />
         <meta name="twitter:image" content={`${SITE_URL}/og-image.png`} />
+        {/* eslint-disable-next-line react/no-danger */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
       </Head>
 
       <Background />
@@ -339,6 +436,9 @@ export default function Home() {
               🧘
             </button>
           )}
+          {notifPermission === 'denied' && (
+            <span className="notifDenied" title={t.notifDeniedHint} aria-label={t.notifDeniedHint}>🔕</span>
+          )}
         </div>
 
         <div className="dashboard">
@@ -352,6 +452,7 @@ export default function Home() {
                 <div className="hpbTop" /><div className="hpbBand"><div className="hpbBtn" /></div><div className="hpbBottom" />
               </div>
             </header>
+            <p className="appTagline">{description}</p>
 
             <div className="statsBar glass">
               <div className="statItem"><span className="statValue">{stats.totalSessions}</span><span className="statLabel">{t.stats[0]}</span></div>
@@ -449,8 +550,40 @@ export default function Home() {
                   <input type="file" ref={importRef} accept=".json" onChange={handleImport} style={{ display: 'none' }} />
                 </div>
               </div>
+              {importMessage && <p className="importMessage">{importMessage}</p>}
+              {collection.length > 0 && (
+                <div className="pokedexFilters">
+                  <input
+                    type="text"
+                    className="pokedexSearch"
+                    placeholder={t.pokedexSearchPlaceholder}
+                    value={pokedexQuery}
+                    onChange={e => setPokedexQuery(e.target.value)}
+                    aria-label={t.pokedexSearchPlaceholder}
+                  />
+                  {availableTypes.length > 1 && (
+                    <select
+                      className="pokedexTypeSelect"
+                      value={pokedexTypeFilter}
+                      onChange={e => setPokedexTypeFilter(e.target.value)}
+                      aria-label={t.pokedexFilterAllTypes}
+                    >
+                      <option value="all">{t.pokedexFilterAllTypes}</option>
+                      {availableTypes.map(tp => (
+                        <option key={tp} value={tp}>{translateType(tp, lang)}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
               <div className="collectionScroll">
-                <PokemonGrid collection={collection} t={t} lang={lang} />
+                <PokemonGrid
+                  collection={filteredCollection}
+                  t={t}
+                  lang={lang}
+                  onDelete={deletePokemonEntry}
+                  isFiltered={pokedexFiltered}
+                />
               </div>
             </section>
 
