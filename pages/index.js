@@ -3,7 +3,7 @@ import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import { GENERATIONS } from '@/lib/constants';
 import { playCompletionSound, fetchRandomPokemon, getDateStr, copyToClipboard, playPokemonCry, encodeShare, decodeShare, readStored } from '@/lib/utils';
-import { checkAchievements } from '@/lib/achievements';
+import { checkAchievements, checkTimeBasedAchievements, mergeAchievements } from '@/lib/achievements';
 import { getRarity } from '@/lib/rarity';
 import { playSoundEffect } from '@/lib/soundEffects';
 import { T, detectLang } from '@/lib/i18n';
@@ -45,14 +45,16 @@ export default function Home() {
   const [currentGoal, setCurrentGoal] = useState('');
 
   const [copied, setCopied] = useState(false);
-  const [achievements, setAchievements] = useState([]);
+  const [achievements, setAchievements] = usePersistentState('poke-achievements', []);
   const [soundsEnabled, setSoundsEnabled] = usePersistentState('poke-sounds-enabled', true);
 
-  const modeRef       = useRef(mode);
-  const importRef     = useRef(null);
-  const soundsRef     = useRef(soundsEnabled);
-  modeRef.current     = mode;
-  soundsRef.current   = soundsEnabled;
+  const modeRef         = useRef(mode);
+  const importRef       = useRef(null);
+  const soundsRef       = useRef(soundsEnabled);
+  const achievementsRef = useRef(achievements);
+  modeRef.current       = mode;
+  soundsRef.current     = soundsEnabled;
+  achievementsRef.current = achievements;
 
   const trackEvent = useCallback((eventName, eventParams = {}) => {
     if (typeof window !== 'undefined' && window.gtag) {
@@ -92,18 +94,24 @@ export default function Home() {
         setCollection(prev => {
           const e = { ...pokemon, goal: currentGoal, date: getDateStr(), session: Date.now(), achievements: [] };
           const next = [e, ...prev];
-
-          const liveStats = { totalSessions: sessions.length + 1, timeStr: '0m', streak: 0, uniquePokemon: new Set(next.map(p => p.id)).size };
-          const newAchievements = checkAchievements(liveStats, next, sessions);
-          setAchievements(newAchievements);
-          if (newAchievements.length > 0) playSoundEffect('achievement', soundsRef.current);
-
           localStorage.setItem('poke-collection', JSON.stringify(next));
           return next;
         });
+
+        // Time-of-day achievements only make sense evaluated right now, at the
+        // moment of capture — everything else is derived reactively below from
+        // the updated collection/sessions (see the effect watching `stats`).
+        const timeBasedUnlocks = checkTimeBasedAchievements();
+        if (timeBasedUnlocks.length > 0) {
+          const merged = mergeAchievements(achievementsRef.current, timeBasedUnlocks);
+          if (merged !== achievementsRef.current) {
+            setAchievements(merged);
+            playSoundEffect('achievement', soundsRef.current);
+          }
+        }
       }, 450);
     }, 2200);
-  }, [currentGoal, lang, sessions, trackEvent]);
+  }, [currentGoal, lang, trackEvent]);
 
   const timer = useTimer({ initialMinutes: 25, onComplete: handleComplete });
   const { totalSec, remaining, running, statusKey, activeDur, timerState, start, pause, reset: resetTimer, applyDuration } = timer;
@@ -181,6 +189,20 @@ export default function Home() {
     return { totalSessions, timeStr, streak, uniquePokemon };
   }, [sessions, collection]);
 
+  // Keep unlocked achievements in sync with real progress — runs on first
+  // load (fixing already-unlocked achievements not showing until the next
+  // catch), after import, and whenever stats/collection/sessions change.
+  // Achievements are only ever added, never removed (see mergeAchievements).
+  useEffect(() => {
+    if (collection.length === 0 && sessions.length === 0) return;
+    const unlocked = checkAchievements(stats, collection, sessions, { includeTimeBased: false });
+    const merged = mergeAchievements(achievements, unlocked);
+    if (merged !== achievements) {
+      setAchievements(merged);
+      if (merged.length > achievements.length) playSoundEffect('achievement', soundsRef.current);
+    }
+  }, [stats, collection, sessions, achievements, setAchievements]);
+
   const ringOffset = CIRCUMFERENCE * (1 - remaining / totalSec);
   const ringClass  = remaining <= 0 ? 'timerRingDone' : remaining <= 60 ? 'timerRingWarning' : '';
   const fmt = s => `${Math.floor(s / 60).toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
@@ -254,7 +276,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Pokémon Pomodoro — Focus & Catch</title>
+        <title>{statusKey === 'ready' ? 'Pokémon Pomodoro — Focus & Catch' : `${fmt(remaining)} · Pokémon Pomodoro`}</title>
         <meta name="description" content={description} />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <meta name="theme-color" content="#EE1515" />
@@ -383,8 +405,11 @@ export default function Home() {
                 <div className="customRow">
                   <input className="customInput" type="number" min={1} max={180}
                     placeholder={t.customPlaceholder} value={customVal}
-                    onChange={e => setCustomVal(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && applyCustom()} autoFocus />
+                    onChange={e => setCustomVal(e.target.value.replace(/[^0-9]/g, ''))}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') applyCustom();
+                      if (e.key === '-' || e.key === '+' || e.key === 'e' || e.key === 'E') e.preventDefault();
+                    }} autoFocus />
                   <button className="durBtn durBtnActive" onClick={applyCustom}>OK</button>
                 </div>
               )}
@@ -425,11 +450,11 @@ export default function Home() {
                 </div>
               </div>
               <div className="collectionScroll">
-                <PokemonGrid collection={collection} t={t} />
+                <PokemonGrid collection={collection} t={t} lang={lang} />
               </div>
             </section>
 
-            <FriendCollection friendCollection={friendCollection} t={t} />
+            <FriendCollection friendCollection={friendCollection} t={t} lang={lang} />
           </div>
         </div>
 
@@ -439,6 +464,7 @@ export default function Home() {
           captured={captured}
           currentGoal={currentGoal}
           t={t}
+          lang={lang}
           closeModal={closeModal}
         />
         {showModal && modalPhase === 'reveal' && <Confetti />}

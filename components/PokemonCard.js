@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { getRarity } from '@/lib/rarity';
+import { translateType } from '@/lib/constants';
 
 // One vivid color per type — used to build the full-card gradient
 const TYPE_COLOR = {
@@ -31,7 +32,7 @@ function shade(hex, amount) {
   return `rgb(${r}, ${g}, ${b})`;
 }
 
-export default function PokemonCard({ pokemon: p, index = 0 }) {
+export default function PokemonCard({ pokemon: p, index = 0, lang = 'en' }) {
   const rarity = getRarity(p.id);
   const tier = rarity.tier; // common | uncommon | ultra-rare | legendary
   const num = String(p.id).padStart(3, '0');
@@ -66,7 +67,7 @@ export default function PokemonCard({ pokemon: p, index = 0 }) {
             {p.types.map(type => (
               <span key={type} className="pcType">
                 <span className="pcTypeIcon">{TYPE_ICONS[type?.toLowerCase()] || '●'}</span>
-                {type}
+                {translateType(type, lang)}
               </span>
             ))}
           </div>

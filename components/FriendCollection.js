@@ -1,6 +1,6 @@
 import PokemonCard from '@/components/PokemonCard';
 
-export default function FriendCollection({ friendCollection, t }) {
+export default function FriendCollection({ friendCollection, t, lang }) {
   if (friendCollection.length === 0) return null;
 
   return (
@@ -13,7 +13,7 @@ export default function FriendCollection({ friendCollection, t }) {
       </div>
       <div className="pokemonGrid">
         {[...friendCollection].sort((a, b) => a.id - b.id).map((p, i) => (
-          <PokemonCard key={`friend-${p.id}-${p.session}`} pokemon={p} index={i} />
+          <PokemonCard key={`friend-${p.id}-${p.session}`} pokemon={p} index={i} lang={lang} />
         ))}
       </div>
     </section>

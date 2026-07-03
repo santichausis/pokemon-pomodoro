@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
 import PokemonCard from '@/components/PokemonCard';
 
-export default function PokemonGrid({ collection, t }) {
+export default function PokemonGrid({ collection, t, lang }) {
   if (collection.length === 0) {
     return (
       <div className="pokemonGrid">
@@ -20,7 +20,7 @@ export default function PokemonGrid({ collection, t }) {
   return (
     <motion.div className="pokemonGrid" layout>
       {[...collection].sort((a, b) => a.id - b.id).map((p, i) => (
-        <PokemonCard key={`${p.id}-${p.session}`} pokemon={p} index={i} />
+        <PokemonCard key={`${p.id}-${p.session}`} pokemon={p} index={i} lang={lang} />
       ))}
     </motion.div>
   );

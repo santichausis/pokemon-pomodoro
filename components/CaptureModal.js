@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
-import { TYPE_CLASSES } from '@/lib/constants';
+import { TYPE_CLASSES, translateType } from '@/lib/constants';
 
 export default function CaptureModal({
   showModal,
@@ -8,6 +8,7 @@ export default function CaptureModal({
   captured,
   currentGoal,
   t,
+  lang,
   closeModal,
 }) {
   const continueRef = useRef(null);
@@ -72,7 +73,7 @@ export default function CaptureModal({
             <h3 className="revealName">{captured.name}</h3>
             <div className="revealTypes">
               {captured.types.map(tp => (
-                <span key={tp} className={`typeBadge ${TYPE_CLASSES[tp] || ''}`}>{tp}</span>
+                <span key={tp} className={`typeBadge ${TYPE_CLASSES[tp] || ''}`}>{translateType(tp, lang)}</span>
               ))}
             </div>
             <div className="capturedBanner">{t.capturedBanner}</div>

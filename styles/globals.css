@@ -841,7 +841,8 @@ body {
   border: 13px solid rgba(255, 255, 255, 0.10);
 }
 
-/* legendary continuous shimmer */
+/* legendary continuous shimmer — ping-pongs back and forth (alternate) so it
+   reverses smoothly instead of snapping back to the start on every loop */
 .pcShimmer {
   position: absolute;
   inset: 0;
@@ -849,11 +850,11 @@ body {
   pointer-events: none;
   background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.22) 50%, transparent 60%);
   background-size: 250% 100%;
-  animation: pcShimmer 4s ease-in-out infinite;
+  animation: pcShimmer 5s ease-in-out infinite alternate;
 }
 @keyframes pcShimmer {
-  0%        { background-position: 140% 0; }
-  60%, 100% { background-position: -140% 0; }
+  0%   { background-position: 140% 0; }
+  100% { background-position: -140% 0; }
 }
 
 /* content */
