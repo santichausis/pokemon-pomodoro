@@ -1182,34 +1182,12 @@ body {
   border: 5px solid #222;
   overflow: hidden;
   box-shadow: 0 8px 24px rgba(0,0,0,0.25);
-  animation: shake 0.5s ease-in-out 3, wobble 2s ease-in-out infinite;
+  /* transform (shake/pop-open) is driven by Motion — see components/CaptureModal.js */
 }
 .pbaTop    { background: var(--red); height: 44%; }
 .pbaBottom { background: var(--card); height: 44%; }
 .pbaBand   { height: 12%; background: var(--text); display: flex; align-items: center; justify-content: center; }
 .pbaBtn    { width: 22px; height: 22px; background: var(--card); border-radius: 50%; border: 4px solid var(--text); }
-
-@keyframes shake {
-  0%, 100% { transform: rotate(0deg); }
-  15%  { transform: rotate(-12deg); }
-  30%  { transform: rotate(12deg); }
-  45%  { transform: rotate(-9deg); }
-  60%  { transform: rotate(9deg); }
-  75%  { transform: rotate(-5deg); }
-  90%  { transform: rotate(5deg); }
-}
-@keyframes wobble {
-  0%, 100% { transform: rotate(0deg) translateY(0); }
-  25% { transform: rotate(-2deg) translateY(-2px); }
-  50% { transform: rotate(2deg) translateY(2px); }
-  75% { transform: rotate(-2deg) translateY(-2px); }
-}
-.pokeballOpening { animation: openBall 0.4s ease forwards !important; }
-@keyframes openBall {
-  0%   { transform: scale(1) rotate(0deg); opacity: 1; }
-  50%  { transform: scale(1.3) rotate(10deg); opacity: 0.7; }
-  100% { transform: scale(0) rotate(20deg); opacity: 0; }
-}
 
 .pokemonReveal {
   display: flex;
@@ -1243,41 +1221,38 @@ body {
   pointer-events: none;
   background: radial-gradient(circle, rgba(255,203,5,0.35) 0%, transparent 70%);
 }
+/* Entrance (pop/scale/opacity) for these is driven by Motion variants in
+   components/CaptureModal.js — CSS only keeps the looping idle float, which
+   lives on the wrapper so it doesn't fight Motion's transform on the img. */
+.pokemonSpriteWrap {
+  display: inline-flex;
+  position: relative;
+  z-index: 1;
+  animation: floatPoke 3s ease-in-out infinite 0.6s;
+}
 .pokemonSprite {
   width: 160px; height: 160px;
   object-fit: contain;
-  animation: revealPoke 0.5s ease, floatPoke 3s ease-in-out infinite 0.5s;
-  position: relative;
-  z-index: 1;
+  display: block;
   filter: drop-shadow(0 8px 16px rgba(255,203,5,0.3));
 }
 @keyframes floatPoke {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(-8px); }
 }
-@keyframes revealPoke {
-  from { opacity: 0; transform: scale(0.5) translateY(20px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-@keyframes revealFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
 .revealNumber {
   font-size: 11px;
   font-weight: 700;
   color: var(--muted);
   letter-spacing: 0.5px;
-  animation: revealFadeIn 0.4s ease-out 0.3s both;
 }
 .revealName {
   font-size: 22px;
   font-weight: 800;
   color: var(--dark);
   letter-spacing: 0.5px;
-  animation: revealFadeIn 0.4s ease-out 0.4s both;
 }
-.revealTypes { display: flex; gap: 6px; animation: revealFadeIn 0.4s ease-out 0.5s both; }
+.revealTypes { display: flex; gap: 6px; }
 .capturedBanner {
   margin-top: 8px;
   background: #FFE135;
@@ -1287,15 +1262,6 @@ body {
   padding: 8px 20px;
   border-radius: 20px;
   box-shadow: 0 3px 10px rgba(255,225,53,0.4);
-  animation: slideUp 0.5s ease, pulse 1.5s ease-in-out 0.5s;
-}
-@keyframes slideUp {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
-}
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
 }
 
 /* Confetti */

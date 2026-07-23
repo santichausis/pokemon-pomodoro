@@ -53,19 +53,69 @@ export default function Home() {
   const [pokedexQuery, setPokedexQuery] = useState('');
   const [pokedexTypeFilter, setPokedexTypeFilter] = useState('all');
 
-  const modeRef         = useRef(mode);
-  const importRef       = useRef(null);
-  const soundsRef       = useRef(soundsEnabled);
-  const achievementsRef = useRef(achievements);
-  modeRef.current       = mode;
-  soundsRef.current     = soundsEnabled;
+  const modeRef          = useRef(mode);
+  const importRef        = useRef(null);
+  const soundsRef        = useRef(soundsEnabled);
+  const achievementsRef  = useRef(achievements);
+  const modalPhaseRef    = useRef(modalPhase);
+  const pendingPokemonRef = useRef(null);
+  const revealPendingRef = useRef(false);
+  modeRef.current        = mode;
+  soundsRef.current      = soundsEnabled;
   achievementsRef.current = achievements;
+  modalPhaseRef.current  = modalPhase;
 
   const trackEvent = useCallback((eventName, eventParams = {}) => {
     if (typeof window !== 'undefined' && window.gtag) {
       window.gtag('event', eventName, eventParams);
     }
   }, []);
+
+  // Called once the capture reveal animation has actually started (not on a
+  // guessed timeout) — commits the catch to the collection/achievements.
+  const revealCapturedPokemon = useCallback(() => {
+    const pokemon = pendingPokemonRef.current;
+    if (!pokemon) return;
+    setCaptured(pokemon);
+    setModalPhase('reveal');
+    playSoundEffect('pokemon-catch', soundsRef.current);
+    playPokemonCry(pokemon.cry, soundsRef.current);
+
+    setCollection(prev => {
+      const e = { ...pokemon, goal: currentGoal, date: getDateStr(), session: Date.now(), achievements: [] };
+      const next = [e, ...prev];
+      localStorage.setItem('poke-collection', JSON.stringify(next));
+      return next;
+    });
+
+    // Time-of-day achievements only make sense evaluated right now, at the
+    // moment of capture — everything else is derived reactively (see the
+    // effect watching `stats`).
+    const timeBasedUnlocks = checkTimeBasedAchievements();
+    if (timeBasedUnlocks.length > 0) {
+      const merged = mergeAchievements(achievementsRef.current, timeBasedUnlocks);
+      if (merged !== achievementsRef.current) {
+        setAchievements(merged);
+        playSoundEffect('achievement', soundsRef.current);
+      }
+    }
+  }, [currentGoal]);
+
+  // Passed to CaptureModal as onPhaseComplete — called by Motion once the
+  // current phase's animation genuinely finishes (shake, then the pop-open
+  // burst), advancing shaking -> opening -> reveal without hardcoded
+  // setTimeout durations that had to be kept in sync with CSS by hand.
+  const advanceCapturePhase = useCallback(() => {
+    if (modalPhaseRef.current === 'shaking') setModalPhase('opening');
+    else if (modalPhaseRef.current === 'opening') {
+      // The pop-open burst can finish before the PokéAPI fetch resolves
+      // (fetch allows up to 8s). Rather than reveal a still-null pokemon,
+      // mark the reveal as pending — handleComplete fires it itself once
+      // the fetch actually resolves.
+      if (pendingPokemonRef.current) revealCapturedPokemon();
+      else revealPendingRef.current = true;
+    }
+  }, [revealCapturedPokemon]);
 
   // Runs when the timer reaches zero: log the session and roll a Pokémon.
   const handleComplete = useCallback(async (durationSec) => {
@@ -76,6 +126,8 @@ export default function Home() {
     setSessions(prev => { const next = [entry, ...prev]; localStorage.setItem('poke-sessions', JSON.stringify(next)); return next; });
 
     setShowModal(true); setModalPhase('shaking'); setCaptured(null);
+    pendingPokemonRef.current = null;
+    revealPendingRef.current = false;
 
     let pokemon = null;
     try { pokemon = await fetchRandomPokemon(GENERATIONS[modeRef.current]?.range || [1, 898]); }
@@ -83,13 +135,19 @@ export default function Home() {
 
     // Couldn't reach PokéAPI (offline, timeout, or an error response) — be
     // honest about it instead of silently substituting a fake Pikachu catch.
-    // The focus session above is already saved either way.
+    // The focus session above is already saved either way. Give the shake a
+    // brief beat before delivering the bad news instead of an instant cut.
     if (!pokemon) {
       setTimeout(() => setModalPhase('error'), 1200);
       return;
     }
 
     pokemon = { ...pokemon, rarity: getRarity(pokemon.id) };
+    pendingPokemonRef.current = pokemon;
+    if (revealPendingRef.current) {
+      revealPendingRef.current = false;
+      revealCapturedPokemon();
+    }
 
     if (typeof window !== 'undefined' && 'Notification' in window) {
       if (Notification.permission === 'granted') {
@@ -102,36 +160,10 @@ export default function Home() {
         Notification.requestPermission().then(setNotifPermission);
       }
     }
-
-    setTimeout(() => {
-      setModalPhase('opening');
-      setTimeout(() => {
-        setCaptured(pokemon);
-        setModalPhase('reveal');
-        playSoundEffect('pokemon-catch', soundsRef.current);
-        playPokemonCry(pokemon.cry, soundsRef.current);
-
-        setCollection(prev => {
-          const e = { ...pokemon, goal: currentGoal, date: getDateStr(), session: Date.now(), achievements: [] };
-          const next = [e, ...prev];
-          localStorage.setItem('poke-collection', JSON.stringify(next));
-          return next;
-        });
-
-        // Time-of-day achievements only make sense evaluated right now, at the
-        // moment of capture — everything else is derived reactively below from
-        // the updated collection/sessions (see the effect watching `stats`).
-        const timeBasedUnlocks = checkTimeBasedAchievements();
-        if (timeBasedUnlocks.length > 0) {
-          const merged = mergeAchievements(achievementsRef.current, timeBasedUnlocks);
-          if (merged !== achievementsRef.current) {
-            setAchievements(merged);
-            playSoundEffect('achievement', soundsRef.current);
-          }
-        }
-      }, 450);
-    }, 2200);
-  }, [currentGoal, lang, trackEvent]);
+    // Phase now advances via CaptureModal's Motion onAnimationComplete
+    // callbacks (see advanceCapturePhase) once the ball finishes shaking,
+    // then once it finishes popping open.
+  }, [currentGoal, lang, trackEvent, revealCapturedPokemon]);
 
   const timer = useTimer({ initialMinutes: 25, onComplete: handleComplete });
   const { totalSec, remaining, running, statusKey, activeDur, timerState, start, pause, reset: resetTimer, applyDuration } = timer;
@@ -597,6 +629,7 @@ export default function Home() {
           currentGoal={currentGoal}
           t={t}
           lang={lang}
+          onPhaseComplete={advanceCapturePhase}
           closeModal={closeModal}
         />
         {showModal && modalPhase === 'reveal' && <Confetti />}
