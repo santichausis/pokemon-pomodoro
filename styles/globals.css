@@ -1073,8 +1073,15 @@ body {
 }
 .pcRarity--ultrarare { background: rgba(255, 255, 255, 0.92); color: #C2185B; border-color: #fff; }
 .pcRarity--legendary { background: rgba(255, 215, 0, 0.92); color: #5A4500; border-color: #FFE79A; }
-.pcCard--legendary { box-shadow: 0 10px 36px rgba(255, 200, 0, 0.40); }
-.pcCard--legendary:hover { box-shadow: 0 22px 52px rgba(255, 200, 0, 0.52); }
+/* box-shadow isn't clipped by this element's own overflow:hidden, so a
+   glow big enough to read as "legendary" bled into the next card in the
+   list (14px grid gap vs. a 46px shadow reach). Give it breathing room via
+   margin instead of shrinking the glow to nothing. */
+.pcCard--legendary {
+  margin: 14px 0;
+  box-shadow: 0 6px 18px rgba(255, 200, 0, 0.38);
+}
+.pcCard--legendary:hover { box-shadow: 0 10px 24px rgba(255, 200, 0, 0.48); }
 
 .pcDelete {
   position: absolute;
