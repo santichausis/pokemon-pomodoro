@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import PokemonCard from '@/components/PokemonCard';
+import Pokeball from '@/components/Pokeball';
 
 export default function PokemonGrid({ collection, t, lang, onDelete, isFiltered = false }) {
   if (collection.length === 0) {
@@ -7,9 +8,7 @@ export default function PokemonGrid({ collection, t, lang, onDelete, isFiltered 
       <div className="pokemonGrid">
         <div className="emptyState">
           <div className="emptyPokeball">
-            <div className="epbTop" />
-            <div className="epbBand"><div className="epbBtn" /></div>
-            <div className="epbBottom" />
+            <Pokeball prefix="epb" />
           </div>
           {isFiltered
             ? <p>{t.pokedexNoMatches}</p>

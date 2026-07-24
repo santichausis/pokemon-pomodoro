@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { T } from '@/lib/i18n';
 
 // `??` (not `||`) so an explicit empty string can intentionally disable GA.
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? 'G-08Q8TZKBRM';
+// No hardcoded fallback ID: a fork without its own NEXT_PUBLIC_GA_ID should
+// simply not send analytics anywhere, not silently report to the original
+// author's account.
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID ?? '';
 
 export default function CookieConsent({ lang = 'en' }) {
   const [showConsent, setShowConsent] = useState(false);

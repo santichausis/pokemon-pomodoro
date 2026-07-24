@@ -11,6 +11,7 @@ import { T, detectLang } from '@/lib/i18n';
 import { useTheme } from '@/hooks/useTheme';
 import { useTimer } from '@/hooks/useTimer';
 import { usePersistentState } from '@/hooks/usePersistentState';
+import Pokeball from '@/components/Pokeball';
 
 // Dynamic imports
 const CookieConsent = dynamic(() => import('@/components/CookieConsent'), { ssr: false });
@@ -449,6 +450,11 @@ export default function Home() {
       <Background />
 
       <div className={`app${zenMode ? ' zen' : ''}`}>
+        <a href="#main-content" className="skipLink">{t.skipToContent}</a>
+        {/* Hidden from assistive tech while the capture modal is open, so a
+            screen reader in browse mode can't wander into the Pokédex/timer
+            behind it — the modal already traps keyboard focus separately. */}
+        <div aria-hidden={showModal || undefined}>
         <div className="topBar">
           <div className="langBar">
             <button className={`langBtn${lang === 'en' ? ' langBtnActive' : ''}`} aria-label="English" aria-pressed={lang === 'en'} onClick={() => { setLang('en'); localStorage.setItem('poke-lang','en'); }}>EN</button>
@@ -492,11 +498,11 @@ export default function Home() {
           <div className="leftPanel">
             <header className="appHeader">
               <div className="headerPokeball">
-                <div className="hpbTop" /><div className="hpbBand"><div className="hpbBtn" /></div><div className="hpbBottom" />
+                <Pokeball prefix="hpb" />
               </div>
               <h1 className="appTitle">{t.title[0]}<br /><span>{t.title[1]}</span></h1>
               <div className="headerPokeball">
-                <div className="hpbTop" /><div className="hpbBand"><div className="hpbBtn" /></div><div className="hpbBottom" />
+                <Pokeball prefix="hpb" />
               </div>
             </header>
             <p className="appTagline">{description}</p>
@@ -519,9 +525,12 @@ export default function Home() {
               </div>
             )}
 
-            <main className="mainCard glass">
+            <main className="mainCard glass" id="main-content" tabIndex={-1}>
               <div className="goalWrapper">
-                <label className="goalLabel" htmlFor="goal-input">{t.goalLabel}</label>
+                <div className="goalLabelRow">
+                  <label className="goalLabel" htmlFor="goal-input">{t.goalLabel}</label>
+                  <span className="goalCounter" aria-hidden="true">{goal.length}/80</span>
+                </div>
                 <input id="goal-input" className="goalInput" type="text"
                   placeholder={t.goalPlaceholder} maxLength={80}
                   value={goal} onChange={e => setGoal(e.target.value)} autoComplete="off" />
@@ -636,6 +645,7 @@ export default function Home() {
 
             <FriendCollection friendCollection={friendCollection} t={t} lang={lang} />
           </div>
+        </div>
         </div>
 
         <CaptureModal

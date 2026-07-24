@@ -1,4 +1,14 @@
 import { Component } from 'react';
+import { T, detectLang } from '@/lib/i18n';
+import Pokeball from '@/components/Pokeball';
+
+// Reads the language independently of Home's React state, which is gone by
+// the time this fallback renders (the crash unmounted whatever held it).
+function currentLang() {
+  if (typeof localStorage === 'undefined') return detectLang();
+  const saved = localStorage.getItem('poke-lang');
+  return saved === 'en' || saved === 'es' ? saved : detectLang();
+}
 
 // Catches render-time errors so a single failure doesn't blank the whole app.
 export default class ErrorBoundary extends Component {
@@ -22,17 +32,16 @@ export default class ErrorBoundary extends Component {
 
   render() {
     if (this.state.hasError) {
+      const t = T[currentLang()] || T.en;
       return (
         <div className="errorFallback">
           <div className="errorPokeball">
-            <div className="epbTop" />
-            <div className="epbBand"><div className="epbBtn" /></div>
-            <div className="epbBottom" />
+            <Pokeball prefix="epb" />
           </div>
-          <h1>Oops! Something went wrong.</h1>
-          <p>The app hit an unexpected error. Your collection is safe.</p>
+          <h1>{t.errorBoundaryTitle}</h1>
+          <p>{t.errorBoundaryMsg}</p>
           <button className="ctrlBtn ctrlBtnPrimary" onClick={this.handleReset}>
-            Reload
+            {t.btnReload}
           </button>
         </div>
       );
