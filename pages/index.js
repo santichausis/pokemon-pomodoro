@@ -117,15 +117,10 @@ export default function Home() {
     }
   }, [revealCapturedPokemon]);
 
-  // Runs when the timer reaches zero: log the session and roll a Pokémon.
-  const handleComplete = useCallback(async (durationSec) => {
-    trackEvent('timer_complete', { duration_min: durationSec / 60, goal: currentGoal });
-    playCompletionSound();
-
-    const entry = { date: getDateStr(), duration: durationSec, goal: currentGoal };
-    setSessions(prev => { const next = [entry, ...prev]; localStorage.setItem('poke-sessions', JSON.stringify(next)); return next; });
-
-    setShowModal(true); setModalPhase('shaking'); setCaptured(null);
+  // Fetches a Pokémon and drives the modal through shaking -> reveal/error.
+  // Shared by the initial catch (handleComplete) and a manual retry after a
+  // failed fetch (retryCapture) — same logic, just triggered differently.
+  const attemptCapture = useCallback(async () => {
     pendingPokemonRef.current = null;
     revealPendingRef.current = false;
 
@@ -135,8 +130,8 @@ export default function Home() {
 
     // Couldn't reach PokéAPI (offline, timeout, or an error response) — be
     // honest about it instead of silently substituting a fake Pikachu catch.
-    // The focus session above is already saved either way. Give the shake a
-    // brief beat before delivering the bad news instead of an instant cut.
+    // The focus session is already saved either way. Give the shake a brief
+    // beat before delivering the bad news instead of an instant cut.
     if (!pokemon) {
       setTimeout(() => setModalPhase('error'), 1200);
       return;
@@ -163,7 +158,28 @@ export default function Home() {
     // Phase now advances via CaptureModal's Motion onAnimationComplete
     // callbacks (see advanceCapturePhase) once the ball finishes shaking,
     // then once it finishes popping open.
-  }, [currentGoal, lang, trackEvent, revealCapturedPokemon]);
+  }, [lang, revealCapturedPokemon]);
+
+  // Runs when the timer reaches zero: log the session and roll a Pokémon.
+  const handleComplete = useCallback(async (durationSec) => {
+    trackEvent('timer_complete', { duration_min: durationSec / 60, goal: currentGoal });
+    playCompletionSound();
+
+    const entry = { date: getDateStr(), duration: durationSec, goal: currentGoal };
+    setSessions(prev => { const next = [entry, ...prev]; localStorage.setItem('poke-sessions', JSON.stringify(next)); return next; });
+
+    setShowModal(true); setModalPhase('shaking'); setCaptured(null);
+    await attemptCapture();
+  }, [currentGoal, trackEvent, attemptCapture]);
+
+  // Lets the user retry just the catch (not the whole focus session) after
+  // a failed fetch — the session was already saved, no need to redo it.
+  const retryCapture = useCallback(() => {
+    trackEvent('capture_retry', {});
+    setCaptured(null);
+    setModalPhase('shaking');
+    attemptCapture();
+  }, [attemptCapture, trackEvent]);
 
   const timer = useTimer({ initialMinutes: 25, onComplete: handleComplete });
   const { totalSec, remaining, running, statusKey, activeDur, timerState, start, pause, reset: resetTimer, applyDuration } = timer;
@@ -290,10 +306,10 @@ export default function Home() {
 
   const onToggle = useCallback(() => {
     if (running) { pause(); return; }
-    setCurrentGoal(goal || 'No goal set');
+    setCurrentGoal(goal || t.goalNotSet);
     trackEvent('timer_start', { duration_min: totalSec / 60 });
     start();
-  }, [running, pause, start, goal, totalSec, trackEvent]);
+  }, [running, pause, start, goal, totalSec, trackEvent, t]);
 
   const onReset = useCallback(() => { resetTimer(); setZenMode(false); }, [resetTimer]);
 
@@ -630,6 +646,7 @@ export default function Home() {
           t={t}
           lang={lang}
           onPhaseComplete={advanceCapturePhase}
+          onRetry={retryCapture}
           closeModal={closeModal}
         />
         {showModal && modalPhase === 'reveal' && <Confetti />}

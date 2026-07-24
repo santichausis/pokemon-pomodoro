@@ -50,6 +50,7 @@ export default function CaptureModal({
   t,
   lang,
   onPhaseComplete,
+  onRetry,
   closeModal,
 }) {
   const closeBtnRef = useRef(null);
@@ -170,7 +171,35 @@ export default function CaptureModal({
           )}
         </AnimatePresence>
 
-        {CLOSABLE_PHASES.has(modalPhase) && (
+        {modalPhase === 'error' && (
+          <div className="controlsRow">
+            <motion.button
+              className="ctrlBtn ctrlBtnSecondary"
+              onClick={closeModal}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              {t.btnClose}
+            </motion.button>
+            <motion.button
+              ref={closeBtnRef}
+              className="ctrlBtn ctrlBtnPrimary"
+              onClick={onRetry}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              {t.btnRetry}
+            </motion.button>
+          </div>
+        )}
+
+        {modalPhase === 'reveal' && (
           <motion.button
             ref={closeBtnRef}
             className="ctrlBtn ctrlBtnPrimary"
@@ -178,11 +207,11 @@ export default function CaptureModal({
             style={{ width: '100%' }}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: modalPhase === 'reveal' ? 0.65 : 0.1 }}
+            transition={{ delay: 0.65 }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.97 }}
           >
-            {modalPhase === 'error' ? t.btnClose : t.btnContinueModal}
+            {t.btnContinueModal}
           </motion.button>
         )}
       </motion.div>
