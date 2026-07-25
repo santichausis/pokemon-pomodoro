@@ -1,63 +1,95 @@
+/* Hallmark · genre: playful · macrostructure: n/a (single-screen app, not a
+ * landing page — adapted structurally instead of picking one of the 21) ·
+ * theme: Hum · enrichment: none · nav: n/a (app control bar, not a marketing
+ * nav) · footer: Ft2 inline single line (pre-existing, kept)
+ *
+ * Theme adaptation notes: paper is cream with a warm pear-yellow tint;
+ * accents are pear (primary action), sky-cyan (secondary), coral-red
+ * (single-moment pop — doubles as this app's pre-existing Pokémon-red brand
+ * anchor). Display+body is Plus Jakarta Sans (rounded-sans); Press Start 2P
+ * survives only on the timer digits, scoped deliberately, not as the UI's
+ * general voice. Hex values below are sRGB approximations of Hum's OKLCH
+ * palette, kept as hex (not oklch()) so the existing
+ * rgba(var(--x-rgb), alpha) pattern used throughout this file keeps working
+ * without a wider refactor.
+ */
+
 /* =====================
    Variables & Reset
    ===================== */
 :root[data-theme="light"] {
-  --red:       #EE1515;
-  --red-dark:  #C0000F;
-  --yellow:    #FFCB05;
-  --blue:      #3D7DCA;
-  --dark:      #003A70;
-  --bg:        #EEF2FB;
-  --bg-rgb:    238, 242, 251;
-  --card:      #FFFFFF;
-  --card-rgb:  255, 255, 255;
-  --border:    #E2E8F0;
-  --text:      #1A1A2E;
-  --muted:     #6B7280;
-  --shadow:    0 10px 40px rgba(20, 30, 70, 0.10);
-  --glass-border: rgba(255, 255, 255, 0.6);
+  --red:       #F2563D; /* coral-red — Hum's pop accent, close to this app's original brand red */
+  --red-dark:  #C43F28;
+  --yellow:    #E8C93A; /* pear-yellow — Hum's primary accent (buttons, streak, character) */
+  --blue:      #3B9BD1; /* sky-cyan — Hum's secondary accent (links, generation selector) */
+  --dark:      #1C1E24; /* ink */
+  --bg:        #F8F4E9; /* cream paper */
+  --bg-rgb:    248, 244, 233;
+  --card:      #FBF8F0; /* paper, one notch lighter than bg — never pure white */
+  --card-rgb:  251, 248, 240;
+  --border:    #E4DFCF;
+  --text:      #2B2D33;
+  --muted:     #8B8672;
+  --shadow:    0 12px 32px -16px rgba(28, 26, 20, 0.20);
+  --glass-border: rgba(28, 26, 20, 0.08);
   --radius:    20px;
-  --blob-a: rgba(61, 125, 202, 0.40);
-  --blob-b: rgba(238, 21, 21, 0.22);
-  --blob-c: rgba(255, 203, 5, 0.30);
+  --radius-pill: 999px;
+  --radius-input: 12px;
+  --blob-a: rgba(59, 155, 209, 0.32);
+  --blob-b: rgba(242, 86, 61, 0.20);
+  --blob-c: rgba(232, 201, 58, 0.30);
 }
 
 :root[data-theme="dark"] {
-  --red:       #FF6B6B;
-  --red-dark:  #EE1515;
-  --yellow:    #FFD700;
-  --blue:      #4A9EFF;
-  --dark:      #E8EAED;
-  --bg:        #0B0E14;
-  --bg-rgb:    11, 14, 20;
-  --card:      #161A22;
-  --card-rgb:  22, 26, 34;
-  --border:    #2A2F3A;
-  --text:      #E8EAED;
-  --muted:     #9AA7BC;
-  --shadow:    0 10px 40px rgba(0, 0, 0, 0.55);
+  --red:       #FF6B4D;
+  --red-dark:  #D14A30;
+  --yellow:    #F5D65A;
+  --blue:      #5CB8E8;
+  --dark:      #F7F0DD;
+  --bg:        #1B1A17; /* warm dark ink — not the old cool navy-black */
+  --bg-rgb:    27, 26, 23;
+  --card:      #26241F;
+  --card-rgb:  38, 36, 31;
+  --border:    #3A362C;
+  --text:      #F1EDE0;
+  --muted:     #A79E88;
+  --shadow:    0 12px 32px -16px rgba(0, 0, 0, 0.55);
   --glass-border: rgba(255, 255, 255, 0.08);
   --radius:    20px;
-  --blob-a: rgba(74, 158, 255, 0.30);
-  --blob-b: rgba(238, 21, 21, 0.24);
-  --blob-c: rgba(255, 215, 0, 0.16);
+  --radius-pill: 999px;
+  --radius-input: 12px;
+  --blob-a: rgba(92, 184, 232, 0.28);
+  --blob-b: rgba(255, 107, 77, 0.26);
+  --blob-c: rgba(245, 214, 90, 0.18);
 }
 
-/* Exponential ease-out, no overshoot — replaces the
-   cubic-bezier(0.34,1.56,0.64,1) "bounce" that used to sit on the header
-   pokeball, the zen-mode timer scale, and the achievement pop-in. */
-:root { --ease-out: cubic-bezier(0.16, 1, 0.3, 1); }
+/* Hum's two named easings: --ease-out for buttons/UI state (no overshoot),
+   --ease-spring for the one deliberate bounce the genre allows — card lift
+   only, never on buttons or focus rings. */
+:root {
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-press: cubic-bezier(0.2, 0.7, 0.3, 1);
+}
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
 
 body {
-  font-family: var(--font-nunito), sans-serif;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+/* next/font's CSS variables are only in scope on the element carrying the
+   .variable className (and its descendants) — that's .appRoot in _app.js,
+   not <body> itself, so the base font-family has to live here rather than
+   on body (var(--font-body) would be invalid/undefined at body's scope and
+   silently fall through to the browser's serif default). */
+.appRoot {
+  font-family: var(--font-body), sans-serif;
 }
 
 /* =====================
@@ -190,9 +222,12 @@ body {
   top: 12px;
 }
 
+/* Hallmark · off-grid moment: the timer clearly outweighs the Pokédex
+   (1.35fr/0.85fr, not the old near-50/50 split) and the right panel starts
+   lower than the left — two columns that don't pretend to be symmetric. */
 .dashboard {
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.85fr);
   gap: clamp(16px, 2.2vw, 32px);
   align-items: start;
   flex: 1;
@@ -211,11 +246,13 @@ body {
   flex-direction: column;
   gap: 14px;
   min-width: 0;
+  margin-top: 34px;
 }
 
 @media (max-width: 900px) {
   .dashboard { grid-template-columns: 1fr; }
   .leftPanel { position: static; }
+  .rightPanel { margin-top: 0; }
 }
 
 /* =====================
@@ -232,7 +269,7 @@ body {
 .langBtn {
   background: none;
   border: none;
-  font-family: var(--font-nunito), sans-serif;
+  font-family: var(--font-body), sans-serif;
   font-size: 11px;
   font-weight: 700;
   color: var(--muted);
@@ -308,12 +345,13 @@ body {
   padding: 6px 8px;
 }
 .appTitle {
-  font-family: var(--font-press-start), monospace;
-  font-size: clamp(14px, 2vw, 20px);
-  line-height: 1.7;
+  font-family: var(--font-body), sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-size: clamp(20px, 2.6vw, 28px);
+  line-height: 1.15;
   text-align: center;
   color: var(--dark);
-  letter-spacing: -0.5px;
 }
 .appTitle span { color: var(--red); }
 
@@ -327,6 +365,11 @@ body {
   line-height: 1.5;
 }
 
+/* Hallmark · character moment — the header pokeball is Hum's mandatory "one
+   small mark that reacts": a gentle at-rest pulse that starts once the
+   entrance (spinIn) finishes. Listing mascotPulse after spinIn in the
+   animation shorthand makes it win on the shared transform property once
+   both are in effect (CSS Animations spec: last-listed wins on conflict). */
 .headerPokeball {
   width: 46px; height: 46px;
   border-radius: 50%;
@@ -334,10 +377,8 @@ body {
   overflow: hidden;
   flex-shrink: 0;
   box-shadow: 0 4px 14px rgba(0,0,0,0.2);
-  transition: transform 0.5s var(--ease-out);
-  animation: spinIn 0.6s ease both;
+  animation: spinIn 0.6s ease both, mascotPulse 4s ease-in-out 0.6s infinite;
 }
-.headerPokeball:hover { transform: rotate(360deg) scale(1.1); }
 .hpbTop    { background: var(--red); height: 44%; }
 .hpbBottom { background: var(--card); height: 44%; }
 .hpbBand   { height: 12%; background: var(--text); display: flex; align-items: center; justify-content: center; }
@@ -345,6 +386,13 @@ body {
 @keyframes spinIn {
   from { opacity: 0; transform: rotate(-90deg) scale(0.5); }
   to   { opacity: 1; transform: rotate(0) scale(1); }
+}
+@keyframes mascotPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .headerPokeball { animation: none; }
 }
 
 /* =====================
@@ -384,6 +432,9 @@ body {
 /* =====================
    Main Card (timer protagonist)
    ===================== */
+/* Hum's multi-accent section bands: the timer card owns pear-yellow, the
+   Pokédex panel (below) owns sky-cyan — each surface holds one accent, no
+   gradient between them. */
 .mainCard {
   border-radius: var(--radius);
   padding: clamp(24px, 3vw, 36px) clamp(20px, 2.5vw, 32px);
@@ -393,6 +444,7 @@ body {
   gap: 22px;
   position: relative;
   overflow: hidden;
+  background: rgba(232, 201, 58, 0.10);
 }
 
 .goalWrapper { width: 100%; }
@@ -420,7 +472,7 @@ body {
   padding: 13px 16px;
   border: 2px solid var(--border);
   border-radius: 14px;
-  font-family: var(--font-nunito), sans-serif;
+  font-family: var(--font-body), sans-serif;
   font-size: 15px;
   font-weight: 600;
   color: var(--text);
@@ -512,7 +564,7 @@ body {
   border: 2px solid var(--border);
   border-radius: 22px;
   background: transparent;
-  font-family: var(--font-nunito), sans-serif;
+  font-family: var(--font-body), sans-serif;
   font-size: 13px;
   font-weight: 700;
   color: var(--muted);
@@ -530,7 +582,7 @@ body {
   padding: 9px 12px;
   border: 2px solid var(--border);
   border-radius: 14px;
-  font-family: var(--font-nunito), sans-serif;
+  font-family: var(--font-body), sans-serif;
   font-size: 14px;
   font-weight: 700;
   outline: none;
@@ -557,7 +609,7 @@ body {
   border: 2px solid var(--border);
   border-radius: 18px;
   background: transparent;
-  font-family: var(--font-nunito), sans-serif;
+  font-family: var(--font-body), sans-serif;
   font-size: 12px;
   font-weight: 700;
   color: var(--muted);
@@ -569,33 +621,38 @@ body {
 .modeBtnActive     { background: var(--blue) !important; border-color: var(--blue) !important; color: #fff !important; box-shadow: 0 6px 16px rgba(61,125,202,0.3); }
 .modeBtn:disabled  { opacity: 0.45; cursor: not-allowed; transform: none; }
 
-/* Controls */
+/* Controls — Hum's push-button system: a solid colour EDGE (not a blurred
+   shadow) gives the button visual thickness, and it physically presses down
+   on :active instead of just dimming. Pear-yellow is Hum's primary-action
+   accent; coral (--red) stays reserved for the one-off capture moment. */
 .controlsRow { display: flex; gap: 12px; width: 100%; }
 .ctrlBtn {
   flex: 1;
   padding: 15px;
   border: none;
-  border-radius: 14px;
-  font-family: var(--font-nunito), sans-serif;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body), sans-serif;
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 700;
   cursor: pointer;
-  transition: transform 0.16s var(--ease-out), box-shadow 0.16s var(--ease-out),
-    border-color 0.16s var(--ease-out);
+  transform: translateY(0);
+  transition: transform 0.14s var(--ease-press, var(--ease-out)),
+    box-shadow 0.14s var(--ease-press, var(--ease-out));
 }
 .ctrlBtnPrimary {
-  background: linear-gradient(135deg, var(--red) 0%, var(--red-dark) 100%);
-  color: #fff;
-  box-shadow: 0 8px 20px rgba(238,21,21,0.38);
+  background: var(--yellow);
+  color: var(--dark);
+  box-shadow: 0 4px 0 0 var(--red-dark), 0 8px 18px -6px rgba(232,201,58,0.55);
 }
-.ctrlBtnPrimary:hover  { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(238,21,21,0.45); }
-.ctrlBtnPrimary:active { transform: translateY(1px); box-shadow: none; }
+.ctrlBtnPrimary:hover  { transform: translateY(-2px); box-shadow: 0 6px 0 0 var(--red-dark), 0 12px 22px -6px rgba(232,201,58,0.6); }
+.ctrlBtnPrimary:active { transform: translateY(3px); box-shadow: 0 1px 0 0 var(--red-dark), 0 3px 8px -4px rgba(232,201,58,0.5); transition-duration: 70ms; }
 .ctrlBtnSecondary {
-  background: rgba(var(--bg-rgb), 0.7);
+  background: transparent;
   color: var(--dark);
   border: 2px solid var(--border);
 }
 .ctrlBtnSecondary:hover { border-color: var(--dark); transform: translateY(-1px); }
+.ctrlBtnSecondary:active { transform: translateY(1px); }
 
 /* Achievements bar */
 .achievementsBar {
@@ -618,6 +675,7 @@ body {
   flex-direction: column;
   gap: 16px;
   max-height: calc(100vh - 32px);
+  background: rgba(59, 155, 209, 0.08);
 }
 @media (max-width: 900px) {
   .collectionPanel { max-height: none; }
@@ -630,7 +688,7 @@ body {
   gap: 10px;
 }
 .collectionTitleGroup { display: flex; align-items: center; gap: 10px; }
-.collectionTitle   { font-family: var(--font-press-start), monospace; font-size: 12px; color: var(--dark); }
+.collectionTitle   { font-family: var(--font-body), sans-serif; font-weight: 700; letter-spacing: -0.01em; font-size: 18px; color: var(--dark); }
 .collectionBadge   {
   background: var(--red); color: #fff;
   font-size: 12px; font-weight: 800;
@@ -643,7 +701,7 @@ body {
   border: 1.5px solid var(--border);
   border-radius: 12px;
   background: rgba(var(--card-rgb), 0.6);
-  font-family: var(--font-nunito), sans-serif;
+  font-family: var(--font-body), sans-serif;
   font-size: 12px;
   font-weight: 700;
   color: var(--text);
@@ -678,7 +736,7 @@ body {
   border-radius: 10px;
   background: rgba(var(--bg-rgb), 0.6);
   color: var(--text);
-  font-family: var(--font-nunito), sans-serif;
+  font-family: var(--font-body), sans-serif;
   font-size: 13px;
   outline: none;
   transition: border-color 0.2s;
@@ -691,7 +749,7 @@ body {
   border-radius: 10px;
   background: rgba(var(--bg-rgb), 0.6);
   color: var(--text);
-  font-family: var(--font-nunito), sans-serif;
+  font-family: var(--font-body), sans-serif;
   font-size: 13px;
   outline: none;
   cursor: pointer;
@@ -745,20 +803,24 @@ body {
 /* ─────────────────────────────────────────
    Full-color type card (redesign)
    ───────────────────────────────────────── */
+/* Hum's color-shift card grid signature move: cards lift on hover with the
+   genre's one deliberate spring (--ease-spring) — the only bounce allowed
+   anywhere in this build besides the primary CTA press. */
 .pcCard {
   position: relative;
   display: flex;
   align-items: stretch;
   min-height: 158px;
-  border-radius: 22px;
+  border-radius: var(--radius);
   overflow: hidden;
   color: #fff;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
   cursor: pointer;
   isolation: isolate;
   will-change: transform;
+  transition: transform 220ms var(--ease-spring), box-shadow 220ms var(--ease-out);
 }
-.pcCard:hover { box-shadow: 0 22px 48px rgba(0, 0, 0, 0.30); }
+.pcCard:hover { transform: translateY(-4px); box-shadow: 0 22px 48px rgba(0, 0, 0, 0.30); }
 
 /* dark scrim over the type gradient for text legibility (text side) */
 .pcCard::before {
@@ -1058,7 +1120,7 @@ body {
 }
 .modalHeader { text-align: center; }
 .modalStars  { color: var(--yellow); font-size: 16px; margin-bottom: 8px; letter-spacing: 4px; }
-.modalTitle  { font-family: var(--font-press-start), monospace; font-size: 14px; color: var(--dark); line-height: 1.4; letter-spacing: 0.5px; margin-bottom: 10px; }
+.modalTitle  { font-family: var(--font-body), sans-serif; font-weight: 700; font-size: 22px; color: var(--dark); line-height: 1.25; letter-spacing: -0.01em; margin-bottom: 10px; }
 .modalGoal   { font-size: 12px; font-weight: 600; color: var(--muted); font-style: italic; }
 
 .captureError {
@@ -1093,12 +1155,14 @@ body {
   gap: 12px;
   position: relative;
 }
+/* Hallmark · the success micro-celebration — coral is Hum's reserved
+   "single high-energy moment per page" accent; this is that moment. */
 .pokemonReveal::before {
   content: '';
   position: absolute;
   width: 220px;
   height: 220px;
-  background: radial-gradient(circle, rgba(255, 215, 0, 0.8) 0%, transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--red) 70%, transparent) 0%, transparent 70%);
   border-radius: 50%;
   animation: glow 0.8s ease-out;
   top: 50%;
@@ -1116,7 +1180,7 @@ body {
   border-radius: 50%;
   top: 0;
   pointer-events: none;
-  background: radial-gradient(circle, rgba(255,203,5,0.35) 0%, transparent 70%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--yellow) 35%, transparent) 0%, transparent 70%);
 }
 /* Entrance (pop/scale/opacity) for these is driven by Motion variants in
    components/CaptureModal.js — CSS only keeps the looping idle float, which
@@ -1152,13 +1216,13 @@ body {
 .revealTypes { display: flex; gap: 6px; }
 .capturedBanner {
   margin-top: 8px;
-  background: #FFE135;
-  color: #1A1A2E;
+  background: var(--yellow);
+  color: var(--dark);
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
   padding: 8px 20px;
-  border-radius: 20px;
-  box-shadow: 0 3px 10px rgba(255,225,53,0.4);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 3px 10px rgba(232,201,58,0.4);
 }
 
 /* Confetti */
@@ -1258,7 +1322,7 @@ body {
   padding: 10px 12px;
   border: none;
   border-radius: 10px;
-  font-family: var(--font-nunito), sans-serif;
+  font-family: var(--font-body), sans-serif;
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
@@ -1361,10 +1425,11 @@ body {
   color: var(--text, #1A1A2E);
 }
 .errorFallback h1 {
-  font-family: var(--font-press-start), monospace;
-  font-size: 16px;
-  color: var(--dark, #003A70);
-  line-height: 1.6;
+  font-family: var(--font-body), sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--dark, #1C1E24);
+  line-height: 1.3;
 }
 .errorFallback p { color: var(--muted, #6B7280); font-weight: 600; max-width: 360px; }
 .errorFallback .ctrlBtn { flex: 0 0 auto; min-width: 160px; }

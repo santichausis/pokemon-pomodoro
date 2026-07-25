@@ -12,6 +12,7 @@ import { useTheme } from '@/hooks/useTheme';
 import { useTimer } from '@/hooks/useTimer';
 import { usePersistentState } from '@/hooks/usePersistentState';
 import Pokeball from '@/components/Pokeball';
+import TickUpNumber from '@/components/TickUpNumber';
 
 // Dynamic imports
 const CookieConsent = dynamic(() => import('@/components/CookieConsent'), { ssr: false });
@@ -508,13 +509,13 @@ export default function Home() {
             <p className="appTagline">{description}</p>
 
             <div className="statsBar glass">
-              <div className="statItem"><span className="statValue">{stats.totalSessions}</span><span className="statLabel">{t.stats[0]}</span></div>
+              <div className="statItem"><span className="statValue"><TickUpNumber value={stats.totalSessions} /></span><span className="statLabel">{t.stats[0]}</span></div>
               <div className="statDivider" />
               <div className="statItem"><span className="statValue">{stats.timeStr}</span><span className="statLabel">{t.stats[1]}</span></div>
               <div className="statDivider" />
-              <div className="statItem"><span className="statValue">{stats.streak}{stats.streak > 0 ? ' 🔥' : ''}</span><span className="statLabel">{t.stats[2]}</span></div>
+              <div className="statItem"><span className="statValue"><TickUpNumber value={stats.streak} suffix={stats.streak > 0 ? ' 🔥' : ''} /></span><span className="statLabel">{t.stats[2]}</span></div>
               <div className="statDivider" />
-              <div className="statItem"><span className="statValue">{stats.uniquePokemon}</span><span className="statLabel">{t.stats[3]}</span></div>
+              <div className="statItem"><span className="statValue"><TickUpNumber value={stats.uniquePokemon} /></span><span className="statLabel">{t.stats[3]}</span></div>
             </div>
 
             {achievements.length > 0 && (
